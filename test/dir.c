@@ -16,14 +16,15 @@ int main(void) {
     lstat(dir_entry->d_name, &buf);
     
     if(S_ISDIR(buf.st_mode))
-      printf("%s/\n", dir_entry->d_name);
+      printf("%s/  ", dir_entry->d_name);
     else {
       if((buf.st_mode) & S_IXUSR)
-        printf("%s*\n", dir_entry->d_name);
+        printf("%s*  ", dir_entry->d_name);
       else
-        printf("%s\n", dir_entry->d_name);
+        printf("%s  ", dir_entry->d_name);
     }
   }
+  printf("\n");
   
   closedir(dp);
   return 0;
