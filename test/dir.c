@@ -12,7 +12,7 @@ int main(void) {
     return -1;
   }
   
-  while(dir_entry = readdir(dp)) {
+  while((dir_entry = readdir(dp))) {
     lstat(dir_entry->d_name, &buf);
     
     if(S_ISDIR(buf.st_mode))
