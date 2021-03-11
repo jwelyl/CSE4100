@@ -22,9 +22,6 @@ int extract_command(char* input, char* cmd) {
   } 
 
   if(inputOver) clearInputBuffer();
-  //
-  printf("입력한 문장 : %s\n", input);
-  //
 
   i = 0;
   while(TRUE) {
@@ -48,10 +45,8 @@ int extract_command(char* input, char* cmd) {
      !strcmp(cmd, "dump") || !strcmp(cmd, "du") || !strcmp(cmd, "edit") || !strcmp(cmd, "e") || 
      !strcmp(cmd, "fill") || !strcmp(cmd, "f") || !strcmp(cmd, "reset") || !strcmp(cmd, "opcode") || 
      !strcmp(cmd, "opcodelist")) {
-      //
-      printf("명령어 : %s\n", cmd);
-      //    
-      return FALSE;
+      
+     return FALSE;
   }
   else return TRUE;
 }
@@ -84,77 +79,90 @@ int checkDump(char* input, char* cmd, int* from, int* to, char* opt1, char* opt2
   int sf = NONE, st = NONE; //  start 옵션의 시작, 끝 index
   int ef = NONE, et = NONE; //  end 옵션의 시작, 끝 index
   int hex;
+ 
+  //  du[mp]AA 꼴의 명령어는 du[mp]로 인식되지 않
+  if(input[i] == '\0') { //  option 없이 du[mp] 꼴
+    *from = address;
+    *to = *from + 159;
 
-  printf("i : (%d)\n", i);
+    printf("du[mp] 뒤에 띄어쓰기 없음\n");
+    return TRUE;
+  }
+  else {  //  du[mp]... 꼴
+    i++;
 
-  for(; i < INPUT_LEN; i++) {
-    if(input[i] == '\0') {
-
-      printf("'\'0 만났을 때!\n");
-
-      if(ef != NONE && et == NONE) {
-
-        printf("'\'0 만났는데 아직 et 못 찾았을 때!\n");
-
-        et = i - 1;
-        opt2[i - ef] = '\0';
-      }
-      break;
-    }
-
-    if(sf == NONE && input[i] != ' ') { //  start 옵션 발견
-      
-      sf = i; //  start 옵션의 시작 index
-      opt1[i - sf] = input[i];
-    }  
-
-    else if(sf != NONE && !comma) {
-      if(input[i] == ' ' && st == NONE) {
-        st = i - 1; //  start 옵션의 끝 index
-        opt1[i - sf] = '\0';
-      }
-      else if(input[i] == ',') {
-        comma = TRUE;
-        if(st == NONE) {
+    for(; i < INPUT_LEN; i++) {
+      if(input[i] == '\0') {
+        //  option 바로 다음에 NULL이 올 경우
+        if(sf != NONE && st == NONE) {
           st = i - 1;
           opt1[i - sf] = '\0';
         }
-      }
-      else opt1[i - sf] = input[i];
-    }
+        else if(ef != NONE && et == NONE) {
+          et = i - 1;
+          opt2[i - ef] = '\0';
+        }
+        break;
+      } //  if '\0' end
 
-    else if(comma && ef == NONE) {
-      if(input[i] != ' ') { //  
-        ef = i;  //  end 옵션의 시작 index
-        opt2[i - ef] = input[i];
+      if(sf == NONE && input[i] != ' ') { //  start option 시작 부분 발견
+        sf = i;
+        opt1[i - sf] = input[i];
       }
-    }
+      else if(sf != NONE && st == NONE) { //  start option 끝 부분 찾는 중
+        if(input[i] == ' ' || input[i] == ',') {  //  start option 끝 부분 발견
+          if(input[i] == ',') comma = TRUE;
 
-    else if(ef != NONE && et == NONE) {
-      if(input[i] == ' ') {
-        et = i - 1; //  end 옵션의 끝 index
-        opt2[i - ef] = '\0';
+          st = i - 1;
+          opt1[i - sf] = '\0';
+        }
+        else opt1[i - sf] = input[i];
       }
-      else opt2[i - ef] = input[i];
-    }
-
-    else if(et != NONE) {
-      if(input[i] != ' ') { //  start, end 이외의 다른 옵션 존재
-        //
-        printf("start, end 이외의 option 존재\n");
-        //
-        return FALSE;
+      else if(st != NONE && !comma) { //  start option 찾은 뒤 ',' 찾는 중
+        if(input[i] != ',' && input[i] != ' ') { // ',' 이전에 end option이 나올 경우
+          printf(", 없이 end option 나옴\n");
+          return FALSE;
+        }
+        else if(input[i] == ',') { // ','를 찾은 경우
+          comma = TRUE;
+        }
       }
-    }
-  }
+      else if(comma && ef == NONE) {  //  ',' 찾은 뒤 end option 찾는 중
+        if(input[i] != ' ') { //  end option 시작 부분 발견
+          ef = i;
+          opt2[i - ef] = input[i];
+        }
+      }
+      else if(ef != NONE && et == NONE) { //  end option 끝 부분 찾는 중
+        if(input[i] == ' ') { //  end option 끝 부분 발견
+          et = i - 1;
+          opt2[i - ef] = '\0';
+        }
+        else {
+          opt2[i - ef] = input[i];
+        }
+      }
+      else if(et != NONE) {
+        if(input[i] != ' ') { //  end option 이후 다른 option 발견
+          printf("start, end 이외의 option\n");
+          return FALSE;
+        }
+      }
+    } //  for - end
+  } //  else - end
 
+  //
   printf("sf = %d\nst = %d\nef = %d\net = %d\n", sf, st, ef, et);
   printf("opt1 : %s\nopt2 : %s\n", opt1, opt2);
-
+  //
+  if(comma && ef == NONE) { //  ',' 후에 end option이 없을 경우
+    printf(", 후에 end option 없음\n");
+    return FALSE;
+  }
   if(sf == NONE && st == NONE && ef == NONE && et == NONE) {
     //  start, end 옵션 모두 없을 경우
     *from = address;
-    *to = address + 9;
+    *to = address + 159;
   }
   else {
     if(sf != NONE && st != NONE) {
@@ -170,15 +178,19 @@ int checkDump(char* input, char* cmd, int* from, int* to, char* opt1, char* opt2
           *from += (hex * (opt1[i] - 'a' + 10));
         else {  //  잘못된 start option
           //
-          printf("잘못된 start 주소 입력\n");
+          printf("잘못된 start 주소(0~9, A~F 이외의 값) 입력\n");
           //
           return FALSE;  
         }
         hex *= 16;
       }
     }
-    if(ef != NONE && et != NONE) { 
+    if(sf != NONE && st != NONE && ef == NONE && et == NONE) {
+      *to = *from + 159;
+    }
+    else if(sf != NONE && st != NONE && ef != NONE && et != NONE) { 
       // end 옵션 있을 경우
+
       hex = 1;
       *to = 0;
       for(i = et - ef; i >= 0; i--) {
@@ -190,7 +202,7 @@ int checkDump(char* input, char* cmd, int* from, int* to, char* opt1, char* opt2
           *to += (hex * (opt2[i] - 'a' + 10));
         else {  //  잘못된 end option
           //
-          printf("잘못된 end 주소 입력\n"); 
+          printf("잘못된 start 주소(0~9, A~F 이외의 값) 입력\n");
           //
           return FALSE;
         }  
@@ -199,7 +211,7 @@ int checkDump(char* input, char* cmd, int* from, int* to, char* opt1, char* opt2
     
       if(*to < *from) { //  [start, end] 범위가 잘못됨
         //
-        printf("start : %d\nend : %d\n범위 오류\n", *from, *to);
+        printf("start : %d\nend : %d\n범위 오류(start > end)\n", *from, *to);
         //
         return FALSE;
       }
@@ -331,9 +343,14 @@ int process_command(char* cmd, char* input) {
   else if(!strcmp(cmd, "dump") || !strcmp(cmd, "du")) {
     int from, to;
 
-    if(!checkDump(input, cmd, &from, &to, opt1, opt2)) return TRUE;
+    if(!checkDump(input, cmd, &from, &to, opt1, opt2)) {
+      printf("유효하지 않은 du[mp] 명령 입력\n");
+      return TRUE;
+    }
     enqueue(input);
+    //
     printf("%s %d %d\n", cmd, from, to);
+    //
   }
   //  e[dit]
   else if(!strcmp(cmd, "edit") || !strcmp(cmd, "e")) {
