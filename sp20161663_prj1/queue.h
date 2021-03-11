@@ -4,14 +4,14 @@
 #include "header.h"
 
 typedef struct node {
-  char cmd[CMD_LEN];
+  char input[INPUT_LEN];
   struct node* link;
 } Node;
 
-Node* alloc_node(char* cmd);
+Node* alloc_node(char* input);
 int isQueueEmpty();
 int numOfElms();
-void enqueue(char* cmd);
+void enqueue(char* input);
 void printQueue();
 void deleteQueue();
 

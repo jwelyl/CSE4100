@@ -4,9 +4,9 @@ Node* front = NULL;
 Node* rear = NULL;
 int num = 0;
 
-Node* alloc_node(char* cmd) {
+Node* alloc_node(char* input) {
   Node* node = (Node*)malloc(sizeof(Node));
-  strcpy(node->cmd, cmd);
+  strcpy(node->input, input);
   node->link = NULL;
   return node;
 }
@@ -19,8 +19,8 @@ int numOfElms() {
   return num;
 }
 
-void enqueue(char* cmd) {
-  Node* newNode = alloc_node(cmd);
+void enqueue(char* input) {
+  Node* newNode = alloc_node(input);
 
   if(isQueueEmpty())  //  queue가 빈 상태에서 삽입할 경우
     front = newNode;
@@ -35,7 +35,7 @@ void printQueue() {
   Node* cur = front;
 
   for(; i <= num; i++) {
-    printf("%-3d %s\n", i, cur->cmd);
+    printf("%-3d %s\n", i, cur->input);
     cur = cur->link;
   }
 }

@@ -3,6 +3,7 @@
 
 #include "header.h"
 
-int process_command(char* cmd);
+int extract_command(char* input, char* cmd);
+int process_command(char* cmd, char* input);
 
 #endif
