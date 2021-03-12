@@ -15,6 +15,9 @@
 #define FALSE              0
 #define TRUE               1
 #define NONE              -1
+#define OPCODE             3
+#define OPCODE_INPUT     30
+#define OPTABLE_SIZE      20
 
 char memory[MAX_MEM_SIZE];
 

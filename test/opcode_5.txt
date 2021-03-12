@@ -1,0 +1,4 @@
+opcode : B4, mnemonic : CLEAR(5), sum : 28860169
+opcode : 88, mnemonic : COMPF(5), sum : 30381533
+opcode : A0, mnemonic : COMPR(5), sum : 30381845
+opcode : C0, mnemonic : FLOAT(5), sum : 64680109

@@ -1,70 +1,11 @@
-#include "optable.h"
-
-HashNode* head[OPTABLE_SIZE];
-HashNode* tail[OPTABLE_SIZE];
-
-HashNode* allocHN(char* opcode, char* mnemonic) {
-  HashNode* node = (HashNode*)malloc(sizeof(HashNode));
-  strcpy(node->opcode, opcode);
-  strcpy(node->mnemonic, mnemonic);
-  node->link = NULL;
-
-  return node;
-}
-
-void push_node(char* opcode, char* mnemonic) {
-  int idx = hash_function(mnemonic);
-  HashNode* node = allocHN(opcode, mnemonic);
-
-  if(!head[idx] && !tail[idx])  //  해당 인덱스에 처음 삽입하는 경우
-    head[idx] = node;
-  else // 이미 하나 이상의 노드가 삽입된 경우
-    tail[idx]->link = node;
-  tail[idx] = node;
-}
-
-int find_opcode(char* mnemonic, char* opcode) {
-  int idx = hash_function(mnemonic);
-
-  HashNode* cur = head[idx];
-
-  for(; cur; cur = cur->link) {
-    if(!strcmp(cur->mnemonic, mnemonic)) {
-      strcpy(opcode, cur->opcode);
-      return TRUE;
-    }
-  }
-  
-  return FALSE;
-}
-
-void print_optable() {
-  int i = 0;
-  for(i = 0; i < OPTABLE_SIZE; i++) {
-    HashNode* cur = head[i];
-
-    printf("%d : ", i);
-    while(cur) {
-      printf("[%s, %s]", cur->mnemonic, cur->opcode);
-      if(cur->link) printf(" -> ");
-      cur = cur->link;
-    }
-    printf("\n");
-  }
-}
-
-void delete_optable() {
-  int i = 0;
-  for(i = 0; i < OPTABLE_SIZE; i++) {
-    HashNode* del = head[i];
-
-    while(del) {
-      head[i] = del->link;
-      free(del);
-      del = head[i];
-    }
-  }
-}
+#include <stdio.h>
+#include <string.h>
+#define OPCODE_INPUT  30
+#define TRUE  1
+#define FALSE 0
+#define OPCODE  3
+#define MNEMONIC  7
+#define OPTABLE_SIZE  20
 
 int mnemonic_sum(char* mnemonic) {
   int i = strlen(mnemonic);
@@ -83,6 +24,9 @@ int hash_function(char* mnemonic) {
   int len = strlen(mnemonic);
   int sum = mnemonic_sum(mnemonic);
 
+  FILE* fp = fopen("num_of_opcodes.txt", "a");
+
+  fprintf(fp, "%d\n", len);
   if(len == 1) return 1;
   else if(len == 6) return 11;
   else if(len == 3) {
@@ -111,40 +55,75 @@ int hash_function(char* mnemonic) {
     else if(14885 <= sum && sum <= 30381533) return 18;
     else if(30381845 <= sum && sum <= 64680109) return 19;
   }
+
 }
 
-void make_optable() {
+int main(void) {
   FILE* fp = fopen("opcode.txt", "r");
+  FILE* fp1 = fopen("opcode_1.txt", "w");
+  FILE* fp2 = fopen("opcode_2.txt", "w");
+  FILE* fp3 = fopen("opcode_3.txt", "w");
+  FILE* fp4 = fopen("opcode_4.txt", "w");
+  FILE* fp5 = fopen("opcode_5.txt", "w");
+  FILE* fp6 = fopen("opcode_6.txt", "w");
+
   char input[OPCODE_INPUT];
   char opcode[OPCODE];
   char mnemonic[MNEMONIC];
+  int i, mstart;
+  int len;
+  int optable[OPTABLE_SIZE] = {0, };
+  int mnem_sum;
 
-  int i, start;
-  int len, sum;
-  
   opcode[OPCODE - 1] = '\0';
   mnemonic[MNEMONIC - 1] = '\0';
 
   while(TRUE) {
     if(!fgets(input, OPCODE_INPUT, fp)) break;
 
+//    printf("%s", input);
+
     for(i = 0; i < 2; i++)
       opcode[i] = input[i];
     for(i = 2; ; i++) {
       if(input[i] != ' ' && input[i] != '\t') {
-        start = i;
+        mstart = i;
         break;
       }
     }
 
-    for(i = start; ; i++) {
+    for(i = mstart; ; i++) {
       if(input[i] == ' ' || input[i] == '\t') {
-        mnemonic[i - start] = '\0';
+        mnemonic[i - mstart] = '\0';
         break;
       }
-      mnemonic[i - start] = input[i];
+      mnemonic[i - mstart] = input[i];
     }
-    
-    push_node(opcode, mnemonic);
+
+    mnem_sum = mnemonic_sum(mnemonic);
+    int len = strlen(mnemonic);
+
+    if(len == 1) fprintf(fp1, "opcode : %s, mnemonic : %s(%d), sum : %d\n", opcode, mnemonic, len, mnem_sum);
+    else if(len == 2) fprintf(fp2, "opcode : %s, mnemonic : %s(%d), sum : %d\n", opcode, mnemonic, len, mnem_sum);
+    else if(len == 3) fprintf(fp3, "opcode : %s, mnemonic : %s(%d), sum : %d\n", opcode, mnemonic, len, mnem_sum);
+    else if(len == 4) fprintf(fp4, "opcode : %s, mnemonic : %s(%d), sum : %d\n", opcode, mnemonic, len, mnem_sum);
+    else if(len == 5) fprintf(fp5, "opcode : %s, mnemonic : %s(%d), sum : %d\n", opcode, mnemonic, len, mnem_sum);
+    else if(len == 6) fprintf(fp6, "opcode : %s, mnemonic : %s(%d), sum : %d\n", opcode, mnemonic, len, mnem_sum);
+
+    optable[hash_function(mnemonic)] += 1;
   }
+
+  for(i = 0; i < OPTABLE_SIZE; i++)
+    printf("%d ", optable[i]);
+  printf("\n");
+
+  fclose(fp);
+  fclose(fp1);
+  fclose(fp2);
+  fclose(fp3);
+  fclose(fp4);
+  fclose(fp5);
+  fclose(fp6);
+  
+  return 0;
 }

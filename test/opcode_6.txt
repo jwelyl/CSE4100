@@ -1,0 +1,1 @@
+opcode : A4, mnemonic : SHIFTL(6), sum : 1352443057

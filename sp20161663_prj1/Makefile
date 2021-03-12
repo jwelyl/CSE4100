@@ -2,8 +2,8 @@ CC = gcc
 CFLAGS = -g
 
 TARGET = 20161663.out
-SRC = 20161663.c command.c queue.c
-OBJ = 20161663.o command.o queue.o
+SRC = 20161663.c command.c queue.c optable.c
+OBJ = 20161663.o command.o queue.o optable.o
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
@@ -12,6 +12,7 @@ $(TARGET): $(OBJ)
 clean:
 	rm $(TARGET) $(OBJ)
 
-20161663.o: header.h command.h queue.h 20161663.c
+20161663.o: header.h command.h queue.h optable.h 20161663.c
 queue.o: header.h queue.h queue.c
+optable.o: header.h optable.h optable.c
 command.o: header.h queue.h command.h queue.c command.c 

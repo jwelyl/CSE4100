@@ -1,0 +1,16 @@
+opcode : 58, mnemonic : ADDF(4), sum : 54821
+opcode : 90, mnemonic : ADDR(4), sum : 55133
+opcode : 28, mnemonic : COMP(4), sum : 1168453
+opcode : 64, mnemonic : DIVF(4), sum : 1525797
+opcode : 9C, mnemonic : DIVR(4), sum : 1526109
+opcode : 48, mnemonic : JSUB(4), sum : 4442633
+opcode : 50, mnemonic : LDCH(4), sum : 5080933
+opcode : 60, mnemonic : MULF(4), sum : 5842733
+opcode : 98, mnemonic : MULR(4), sum : 5843045
+opcode : C8, mnemonic : NORM(4), sum : 6198491
+opcode : 4C, mnemonic : RSUB(4), sum : 8098441
+opcode : 54, mnemonic : STCH(4), sum : 8560981
+opcode : E8, mnemonic : STSW(4), sum : 8572187
+opcode : 5C, mnemonic : SUBF(4), sum : 8577829
+opcode : 94, mnemonic : SUBR(4), sum : 8578141
+opcode : B8, mnemonic : TIXR(4), sum : 8839077

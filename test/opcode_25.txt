@@ -1,0 +1,8 @@
+opcode : 44, mnemonic : OR, sum : 9841
+opcode : D8, mnemonic : RD, sum : 11505
+opcode : E0, mnemonic : TD, sum : 12857
+opcode : DC, mnemonic : WD, sum : 14885
+opcode : B4, mnemonic : CLEAR, sum : 28860169
+opcode : 88, mnemonic : COMPF, sum : 30381533
+opcode : A0, mnemonic : COMPR, sum : 30381845
+opcode : C0, mnemonic : FLOAT, sum : 64680109

@@ -1,0 +1,4 @@
+opcode : 44, mnemonic : OR(2), sum : 9841
+opcode : D8, mnemonic : RD(2), sum : 11505
+opcode : E0, mnemonic : TD(2), sum : 12857
+opcode : DC, mnemonic : WD(2), sum : 14885
