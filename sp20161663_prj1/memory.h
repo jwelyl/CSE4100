@@ -10,5 +10,6 @@ char ascii_col[PRINT_LEN];
 
 void reset_memory();
 void edit_value(int addr, int val);
+void fill_value(int start, int end, int val);
 
 #endif

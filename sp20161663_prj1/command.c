@@ -443,7 +443,7 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
     i++;
 
     for(; i < INPUT_LEN; i++) {
-      if(input[i] == NONE) {
+      if(input[i] == '\0') {
         if(sf == NONE || st == NONE || ef == NONE || 
             et == NONE || vf == NONE) { //  필요한 option이 없을 경우
           printf("f[ill] option 부족\n");
@@ -523,6 +523,9 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
       }
 
       else if(vf != NONE && vt == NONE) { //  value option 끝 부분 찾는 중
+   //     printf("sp : %d\n", ' ');
+   //     printf("input[%d] : %c(%d)\n", i, input[i], input[i]);
+              
         if(input[i] == ' ') { //  value option 끝 부분 발견
           vt = i - 1;
           printf("vt = %d\n", vt);
@@ -532,7 +535,7 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
       else if(vt != NONE) {
         if(input[i] != ' ') { //  value option 이후 다른 option 발견
           printf("value option 이후 다른 option 발견\n");
-          printf("다른 option : input[%d] = %c\n", i, input[i]);
+          printf("다른 option : input[%d] = %c(%d)\n", i, input[i], input[i]);
           return FALSE;
         }
       }
@@ -569,7 +572,7 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
   opt2[i] = '\0';
 
   for(i = vf; i <= vt; i++)
-    opt1[i - vf] = input[i];
+    opt3[i - vf] = input[i];
   opt3[i] = '\0';
 
   printf("start address : [%s]\n", opt1);
@@ -599,7 +602,7 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
     if('0' <= opt2[i] && opt2[i] <= '9')
       *end += (hex * (opt2[i] - '0'));
     else if('A' <= opt2[i] && opt2[i] <= 'F')
-      *end += (hex * (opt1[i] - 'A' + 10));
+      *end += (hex * (opt2[i] - 'A' + 10));
     else if('a' <= opt2[i] && opt2[i] <= 'f')
       *end += (hex * (opt2[i] - 'a' + 10));
     else {  //  잘못된 address
@@ -622,7 +625,13 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
     hex *= 16;
   }
 
-  printf("start : <%d>\nend : <%d>\nvalue : <%d>\n", *start, *end, *value);
+  printf("start : <<%d>>\nend : <<%d>>\nvalue : <<%d>>\n", *start, *end, *value);
+  if(*start > *end) {
+    printf("start > end\n");
+    return FALSE; 
+  }
+
+  printf("start : <%d>\nend : <%d>\nvalue : <%d>\n", *start, *end, *value); 
   return TRUE;
 }
 
@@ -636,10 +645,16 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
   //  q[uit]
   if(!strcmp(cmd, "quit") || !strcmp(cmd, "q")) {
     if(!strcmp(cmd, "quit")) {
-      if(!check_no_opt(input, 4)) return TRUE;
+      if(!check_no_opt(input, 4)) {
+        printf("유효하지 않은 q[uit] 명령\n");
+        return TRUE;
+      }
     } 
     else {
-      if(!check_no_opt(input, 1)) return TRUE;
+      if(!check_no_opt(input, 1)) {
+        printf("유효하지 않은 q[uit] 명령\n");
+        return TRUE;
+      }
     }
     delete_queue();
     delete_optable();
@@ -650,10 +665,16 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
   if(!strcmp(cmd, "help") || !strcmp(cmd, "h")) {
     
     if(!strcmp(cmd, "help")) {
-      if(!check_no_opt(input, 4)) return TRUE;
+      if(!check_no_opt(input, 4)) {
+        printf("유효하지 않은 h[elp] 명령\n");
+        return TRUE;
+      }
     } 
     else {
-      if(!check_no_opt(input, 1)) return TRUE;
+      if(!check_no_opt(input, 1)) {
+        printf("유효하지 않은 h[elp] 명령\n");
+        return TRUE;
+      }
     }
           
     enqueue(input);
@@ -674,10 +695,16 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
   else if(!strcmp(cmd, "dir") || !strcmp(cmd, "d")) {
     
     if(!strcmp(cmd, "dir")) {
-      if(!check_no_opt(input, 3)) return TRUE;
+      if(!check_no_opt(input, 3)) {
+        printf("유효하지 않은 d[ir] 명령\n");
+        return TRUE;
+      }
     } 
     else {
-      if(!check_no_opt(input, 1)) return TRUE;
+      if(!check_no_opt(input, 1)) {
+        printf("유효하지 않은 d[ir] 명령\n");
+        return TRUE;
+      }
     }
 
     enqueue(input);
@@ -706,12 +733,17 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
   else if(!strcmp(cmd, "history") || !strcmp(cmd, "hi")) {
     
     if(!strcmp(cmd, "history")) {
-      if(!check_no_opt(input, 7)) return TRUE;
+      if(!check_no_opt(input, 7)) {
+        printf("유효하지 않은 hi[story] 명령\n");
+        return TRUE;
+      }
     } 
     else {
-      if(!check_no_opt(input, 2)) return TRUE;
+      if(!check_no_opt(input, 2)) {
+        printf("유효하지 않은 hi[story] 명령\n");
+        return TRUE;
+      }
     }
-
     enqueue(input);
     print_queue();
   }
@@ -726,7 +758,10 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
   //  opcodelist
   else if(!strcmp(cmd, "opcodelist")) {
     
-     if(!check_no_opt(input, 10)) return TRUE;
+     if(!check_no_opt(input, 10)) {
+        printf("유효하지 않은 opcodelist 명령\n");
+        return TRUE;
+     }
 
      print_optable();
      enqueue(input);
@@ -738,6 +773,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
     int from, to;
 
     if(!check_dump(input, cmd, &from, &to, opt1, opt2)) {
+      printf("유효하지 않은 du[mp] 명령\n");
       return TRUE;
     }
 
@@ -749,7 +785,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
     int addr, val;
 
     if(!check_edit(input, cmd, &addr, &val, opt1, opt2)) {
-      printf("e[dit] 명령어 어딘가 잘못됨.\n");
+      printf("유효하지 않은 e[dit] 명령\n");
       return TRUE;  
     }
 
@@ -763,12 +799,17 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
     if(!check_fill(input, cmd, &start, &end, &value, opt1, opt2, opt3)) {
       printf("유효하지 않은 f[ill] 명령\n");
       return TRUE;
-    }  
+    } 
+
+    fill_value(start, end, value);
     enqueue(input);
   }
   //  opcode
   else if(!strcmp(cmd, "opcode")) {
-    if(!check_opcode(input, mnemonic, opcode)) return TRUE;
+    if(!check_opcode(input, mnemonic, opcode)) {
+      printf("유효하지 않은 opcode 명령\n");
+      return TRUE;
+    }
     enqueue(input);
   }
 
