@@ -6,6 +6,11 @@ void reset_memory() {
     memory[i] = 0;
 }
 
+void dump_memory(int start, int end) {
+  int start_line = start / 16;
+  int end_line = end / 16;
+}
+
 void edit_value(int addr, int val) {
   memory[addr] = val;
 }
