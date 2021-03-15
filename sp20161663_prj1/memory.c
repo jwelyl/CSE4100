@@ -39,9 +39,6 @@ void dump_memory(int start, int end) {
   int start_line = start / 16;
   int end_line = end / 16;
 
-  printf("start-line : %d\n", start_line);
-  printf("end-line : %d\n", end_line);
-
   int addr;     //  각 라인의 시작 주소(0, 16, 32, ...)
   int addr_end; //  각 라인의 끝 주소(15, 31, 47, ...)
 
@@ -146,20 +143,11 @@ void dump_memory(int start, int end) {
 }
 
 void edit_value(int addr, int val) {
-  printf("target address = %X\n", addr);
-  printf("target value = %X\n", val);
-  
-  printf("memory[%X] = %c before edit\n", addr, memory[addr]);
   memory[addr] = val;
-  printf("memory[%X] = %c after edit\n", addr, memory[addr]);
 }
 
 void fill_value(int start, int end, int val) {
   int i;
-
-  printf("start address = %X\n", start);
-  printf("end address = %X\n", end);
-  printf("value = %X\n", val);
 
   for(i = start; i <= end; i++)
     memory[i] = val;

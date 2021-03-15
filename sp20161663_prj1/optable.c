@@ -30,7 +30,6 @@ void push_node(char* opcode, char* mnemonic) {
 
 int find_opcode(char* mnemonic, char* opcode) {
   int idx = hash_function(mnemonic);
-//  printf("테이블 삽입(탐색) index : %d\n", idx);
   if(idx == NONE) return FALSE; //  탐색 실패(찾을 위치 선정 불가)
 
   HashNode* cur = head[idx];
@@ -89,9 +88,6 @@ int mnemonic_sum(char* mnemonic) {
 int hash_function(char* mnemonic) {
   int len = strlen(mnemonic);
   int sum = mnemonic_sum(mnemonic);
-
-//  printf("len = %d\n", len);
-//  printf("sum = %d\n", sum);
 
   if(len == 1) return 1;
   else if(len == 6) return 11;

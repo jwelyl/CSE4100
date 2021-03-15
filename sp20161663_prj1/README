@@ -1,0 +1,23 @@
+# System Programming Project 1
+Implementation of shell, memory space, opcode table, and related commands
+
+## How to compile
+make
+
+## How to run
+./20161663.out
+
+### How to use
+h[elp] : prints a list of all available commands in the sicsim shell.
+d[ir] : prints the files in the current directory.
+q[uit] : Exit the sicsim shell.
+hi[story] : prints out the commands used so far in order.
+du[mp] [start, end] : prints from start address to end address of memory space
+e[dit] address, value : edit value stored in address of memory
+f[ill] start, end, value : fill value stored from start address to end address
+reset : reset all memory to 0
+opcode mnemonic : prints an opcode corresponding to the mnemonic
+opcodelist : prints opcode hash table
+
+### How to clean
+make clean
