@@ -11,18 +11,18 @@ Node* alloc_node(char* input) {
   return node;
 }
 
-int isQueueEmpty() {
+int is_queue_empty() {
   return num == 0;
 }
 
-int numOfElms() {
+int num_of_elms() {
   return num;
 }
 
 void enqueue(char* input) {
   Node* newNode = alloc_node(input);
 
-  if(isQueueEmpty())  //  queue가 빈 상태에서 삽입할 경우
+  if(is_queue_empty())  //  queue가 빈 상태에서 삽입할 경우
     front = newNode;
   else rear->link = newNode;
 
@@ -30,7 +30,7 @@ void enqueue(char* input) {
   num++;
 }
 
-void printQueue() {
+void print_queue() {
   int i = 1;
   Node* cur = front;
 
@@ -40,7 +40,7 @@ void printQueue() {
   }
 }
 
-void deleteQueue() {
+void delete_queue() {
   Node* cur = front;
 
   while(cur) {

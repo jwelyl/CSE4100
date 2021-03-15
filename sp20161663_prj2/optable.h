@@ -1,7 +1,7 @@
 #ifndef __OPTABLE__
 #define __OPTABLE__
 
-#include "header.h"
+#include "20161663.h"
 
 typedef struct hashNode {
   char mnemonic[MNEMONIC];

@@ -1,7 +1,7 @@
 #ifndef __QUEUE__
 #define __QUEUE__
 
-#include "header.h"
+#include "20161663.h"
 
 typedef struct node {
   char input[INPUT_LEN];
@@ -9,11 +9,11 @@ typedef struct node {
 } Node;
 
 Node* alloc_node(char* input);
-int isQueueEmpty();
-int numOfElms();
+int is_queue_empty();
+int num_of_elms();
 void enqueue(char* input);
-void printQueue();
-void deleteQueue();
+void print_queue();
+void delete_queue();
 
 #endif
 

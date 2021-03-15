@@ -1,0 +1,11 @@
+# tar로 압축하기
+> tar -cvf [압축 파일명.tar] [디렉토리명]
+
+ex) abc라는 디렉토리를 aaa.tar로 압축하려면
+  > tar -cvf aaa.tar abc
+
+# tar 압축 풀기
+> tar -xvf [압축 파일명.tar]
+
+ex) aaa.tar라는 tar 파일 압축을 풀려면
+  > tar -xvf aaa.tar

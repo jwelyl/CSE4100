@@ -16,6 +16,11 @@ void push_node(char* opcode, char* mnemonic) {
   int idx = hash_function(mnemonic);
   HashNode* node = allocHN(opcode, mnemonic);
 
+  if(idx == NONE) { //  삽입할 index 없음
+    free(node);
+    return;
+  }
+
   if(!head[idx] && !tail[idx])  //  해당 인덱스에 처음 삽입하는 경우
     head[idx] = node;
   else // 이미 하나 이상의 노드가 삽입된 경우
@@ -25,6 +30,7 @@ void push_node(char* opcode, char* mnemonic) {
 
 int find_opcode(char* mnemonic, char* opcode) {
   int idx = hash_function(mnemonic);
+  if(idx == NONE) return FALSE; //  탐색 실패(찾을 위치 선정 불가)
 
   HashNode* cur = head[idx];
 
@@ -97,6 +103,7 @@ int hash_function(char* mnemonic) {
     else if(329355 <= sum && sum <= 329615) return 8;
     else if(329641 <= sum && sum <= 329849) return 9;
     else if(330551 <= sum && sum <= 339885) return 10;
+    else return NONE;
   }
   else if(len == 4) {
     if(54821 <= sum && sum <= 55133) return 11;
@@ -105,12 +112,15 @@ int hash_function(char* mnemonic) {
     else if(5843045 <= sum && sum <= 8098441) return 14;
     else if(8560981 <= sum && sum <= 8577829) return 15;
     else if(8578141 <= sum && sum <= 8839077) return 16;
+    else return NONE;
   }
   else if(len == 2 || len == 5) {
     if(9841 <= sum && sum <= 12857) return 17;
     else if(14885 <= sum && sum <= 30381533) return 18;
     else if(30381845 <= sum && sum <= 64680109) return 19;
+    else return NONE;
   }
+  else return NONE;
 }
 
 void make_optable() {
@@ -120,7 +130,6 @@ void make_optable() {
   char mnemonic[MNEMONIC];
 
   int i, start;
-  int len, sum;
   
   opcode[OPCODE - 1] = '\0';
   mnemonic[MNEMONIC - 1] = '\0';

@@ -1,12 +1,12 @@
-#include "header.h"
+#include "20161663.h"
 #include "optable.h"
 #include "command.h"
 
 int main(void) {
   char input[INPUT_LEN];
   char cmd[MAX_CMD];
-  
   make_optable();
+  
   while(1) {
     printf("sicsim> ");
     
