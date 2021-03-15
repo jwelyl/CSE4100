@@ -15,11 +15,11 @@
 #define FALSE              0
 #define TRUE               1
 #define NONE              -1
-#define ADDR_LEN           6
-#define PRINT_LEN         16
-#define PRINT_HEX          2
 #define OPCODE             3
 #define OPCODE_INPUT      30
 #define OPTABLE_SIZE      20
+
+#define ADDRESS_COL        6
+#define HEX_COL            3 
 
 #endif

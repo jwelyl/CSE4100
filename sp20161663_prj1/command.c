@@ -686,7 +686,7 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
   return TRUE;
 }
 
-int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
+int process_command(char* cmd, char* input, char* memory) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
   DIR* dp = NULL;
   struct dirent* dir_entry;
   struct stat dir_stat;
@@ -806,7 +806,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
       printf("유효하지 않은 reset 명령\n");
       return TRUE;
     }
-    reset_memory();
+    reset_memory(memory);
     enqueue(input);
   }
 
@@ -846,6 +846,8 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
     else {  //  start, end option 모두 존재
       sprintf(queue_input, "%s %s, %s", cmd, opt1, opt2);
     }
+
+    dump_memory(memory, start, end);
     enqueue(queue_input);
   }
   //  e[dit]
@@ -857,7 +859,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
       return TRUE;  
     }
 
-    edit_value(addr, val);
+    edit_value(memory, addr, val);
     sprintf(queue_input, "%s %s, %s", cmd, opt1, opt2);
     enqueue(queue_input);
   }
@@ -870,7 +872,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
       return TRUE;
     } 
 
-    fill_value(start, end, value);
+    fill_value(memory, start, end, value);
     sprintf(queue_input, "%s %s, %s, %s", cmd, opt1, opt2, opt3);
     enqueue(queue_input);
   }

@@ -4,6 +4,6 @@
 #include "20161663.h"
 
 int invalid_command(char* input, char* cmd);
-int process_command(char* cmd, char* input);
+int process_command(char* cmd, char* input, char* memory);
 
 #endif
