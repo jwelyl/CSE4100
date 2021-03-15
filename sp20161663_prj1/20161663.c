@@ -2,11 +2,12 @@
 #include "optable.h"
 #include "command.h"
 
+char memory[MAX_MEM_SIZE];
+
 int main(void) {
   char input[INPUT_LEN];
   char cmd[MAX_CMD];
-  char memory[MAX_MEM_SIZE] = {'z',};
-  
+
   make_optable();
   
   while(1) {

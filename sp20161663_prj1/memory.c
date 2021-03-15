@@ -52,93 +52,97 @@ void dump_memory(char* memory, int start, int end) {
     addr = i * 16;
     addr_end = addr + 15;
   
-//    printf("시작 주소 : %#X\n", addr);
-//    printf("끝 주소 : %#X\n", addr_end);
-
     dec_to_hex(addr, addr_col, ADDRESS_COL);
     printf("%s ", addr_col);
 
-    if(start_line == end_line) {
-      for(j = addr; j < start; j++) {
-        printf("%c%c%c", ' ', ' ', ' ');
-      }
+    if(i == start_line && i == end_line) {  //  한 줄 출력
+      for(j = addr; j < start; j++)
+        printf("   ");
+  
       for(j = start; j <= end; j++) {
         dec_to_hex(memory[j], hex_col, HEX_COL);
         printf("%s ", hex_col);
       }
-      for(j = end + 1; j <= addr_end; j++) {
-        printf("%c%c%c", ' ', ' ', ' ');
-      }
+
+      for(j = end + 1; j <= addr_end; j++) 
+        printf("   ");
       printf("; ");
 
-      for(j = addr; j < start; j++) {
-        printf("%c", '.');
-      }
+      for(j = addr; j < start; j++)
+        printf(".");
+  
       for(j = start; j <= end; j++) {
-        if(memory[i] == 0) printf("%c", '.');
-        else printf("%c", memory[i]);
+        if(32 <= memory[j] && memory[j] <= 126) {
+          printf("%c", memory[j]);
+        }
+        else printf(".");
       }
-      for(j = end + 1; j < addr_end; j++) {
-        printf("%c", '.');
-      }
-      printf("\n");
 
+      for(j = end + 1; j <= addr_end; j++) 
+        printf(".");
+      printf("\n");
+      break;
     }
 
-    else if(i == start_line) {
-      for(j = addr; j < start; j++) {
-        printf("%c%c%c", ' ', ' ', ' ');
-      }
+    else if(i == start_line) {  //  시작줄일 경우
+       for(j = addr; j < start; j++)
+        printf("   ");
+  
       for(j = start; j <= addr_end; j++) {
         dec_to_hex(memory[j], hex_col, HEX_COL);
         printf("%s ", hex_col);
       }
       printf("; ");
 
-      for(j = addr; j < start; j++) {
-        printf("%c", '.');
-      }
+      for(j = addr; j < start; j++)
+        printf(".");
+  
       for(j = start; j <= addr_end; j++) {
-        if(memory[i] == 0) printf("%c", '.');
-        else printf("%c", memory[i]);
+        if(32 <= memory[j] && memory[j] <= 126) {
+          printf("%c", memory[j]);
+        }
+        else printf(".");
       }
       printf("\n");
     }
 
-    else if(i == end_line) {
+    else if(i == end_line) {  //  마지막줄일 경우
       for(j = addr; j <= end; j++) {
         dec_to_hex(memory[j], hex_col, HEX_COL);
         printf("%s ", hex_col);
       }
-      for(j = end + 1; j <= addr_end; j++) {
-        printf("%c%c%c", ' ', ' ', ' ');
-      }
+      for(j = end + 1; j <= addr_end; j++) 
+        printf("   ");
       printf("; ");
-
+  
       for(j = addr; j <= end; j++) {
-        if(memory[i] == 0) printf("%c", '.');
-        else printf("%c", memory[i]);
+        if(32 <= memory[j] && memory[j] <= 126) {
+          printf("%c", memory[j]);
+        }
+        else printf(".");
       }
-      for(j = end + 1; j <= addr_end; j++) {
-        printf("%c", '.');
-      }
+       for(j = end; j < addr_end; j++)
+        printf(".");
+
       printf("\n");
     }
 
-    else {
+    else {  //  중간 줄일 경우
       for(j = addr; j <= addr_end; j++) {
         dec_to_hex(memory[j], hex_col, HEX_COL);
         printf("%s ", hex_col);
       }
       printf("; ");
-
+  
       for(j = addr; j <= addr_end; j++) {
-        if(memory[i] == 0) printf("%c", '.');
-        else printf("%c", memory[i]);
+        if(32 <= memory[j] && memory[j] <= 126) {
+          printf("%c", memory[j]);
+        }
+        else printf(".");
       }
       printf("\n");
     }
-  }
+  } //  for - end
 }
 
 void edit_value(char* memory, int addr, int val) {
