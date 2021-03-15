@@ -686,11 +686,11 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
   return TRUE;
 }
 
-int process_command(char* cmd, char* input, char* memory) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
+int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
   DIR* dp = NULL;
   struct dirent* dir_entry;
   struct stat dir_stat;
-  char opt1[MAX_OPR] = {0, }, opt2[MAX_OPR] = {0, }, opt3[MAX_OPR] = {0, };
+  char opt1[MAX_OPT] = {0, }, opt2[MAX_OPT] = {0, }, opt3[MAX_OPT] = {0, };
   char mnemonic[MNEMONIC] = {0, }, opcode[OPCODE] = {0, };
   char queue_input[INPUT_LEN] = {0, };  //  history queue에 삽입될 정제된 명령어
  
@@ -806,7 +806,7 @@ int process_command(char* cmd, char* input, char* memory) { //  qu[it] 명령 �
       printf("유효하지 않은 reset 명령\n");
       return TRUE;
     }
-    reset_memory(memory);
+    reset_memory();
     enqueue(input);
   }
 
@@ -847,7 +847,7 @@ int process_command(char* cmd, char* input, char* memory) { //  qu[it] 명령 �
       sprintf(queue_input, "%s %s, %s", cmd, opt1, opt2);
     }
 
-    dump_memory(memory, start, end);
+    dump_memory(start, end);
     enqueue(queue_input);
   }
   //  e[dit]
@@ -859,7 +859,7 @@ int process_command(char* cmd, char* input, char* memory) { //  qu[it] 명령 �
       return TRUE;  
     }
 
-    edit_value(memory, addr, val);
+    edit_value(addr, val);
     sprintf(queue_input, "%s %s, %s", cmd, opt1, opt2);
     enqueue(queue_input);
   }
@@ -872,7 +872,7 @@ int process_command(char* cmd, char* input, char* memory) { //  qu[it] 명령 �
       return TRUE;
     } 
 
-    fill_value(memory, start, end, value);
+    fill_value(start, end, value);
     sprintf(queue_input, "%s %s, %s, %s", cmd, opt1, opt2, opt3);
     enqueue(queue_input);
   }

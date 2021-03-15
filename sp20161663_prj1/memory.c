@@ -28,13 +28,13 @@ void dec_to_hex(int dec, char* hex, int len) {
   }
 }
 
-void reset_memory(char* memory) {
+void reset_memory() {
   int i = 0;
   for(i = 0; i < MAX_MEM_SIZE; i++)
     memory[i] = 0;
 }
 
-void dump_memory(char* memory, int start, int end) {
+void dump_memory(int start, int end) {
   int i, j;
   int start_line = start / 16;
   int end_line = end / 16;
@@ -145,7 +145,7 @@ void dump_memory(char* memory, int start, int end) {
   } //  for - end
 }
 
-void edit_value(char* memory, int addr, int val) {
+void edit_value(int addr, int val) {
   printf("target address = %X\n", addr);
   printf("target value = %X\n", val);
   
@@ -154,7 +154,7 @@ void edit_value(char* memory, int addr, int val) {
   printf("memory[%X] = %c after edit\n", addr, memory[addr]);
 }
 
-void fill_value(char* memory, int start, int end, int val) {
+void fill_value(int start, int end, int val) {
   int i;
 
   printf("start address = %X\n", start);
