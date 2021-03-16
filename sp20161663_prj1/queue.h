@@ -3,7 +3,7 @@
 
 #include "20161663.h"
 
-typedef struct node {
+typedef struct node { //  history queue에 저장될 명령어를 위한 노드 구조체
   char input[INPUT_LEN];
   struct node* link;
 } Node;

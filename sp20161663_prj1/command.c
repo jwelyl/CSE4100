@@ -93,9 +93,10 @@ int check_dump(char* input, char* cmd, int* start, int* end, char* opt1, char* o
  
   //  du[mp]AA 꼴의 명령어는 du[mp]로 인식되지 않음
   if(input[i] == '\0') { //  option 없이 du[mp] 꼴
-    if(address >= MAX_MEM_SIZE) {
-      printf("End of memory\n");
-      return FALSE;
+    if(address >= MAX_MEM_SIZE) { //  메모리 끝까지 출력했을 경우
+  //    printf("End of memory\n");
+  //    return FALSE;
+        address = 0;  //  처음부터 다시 출력함
     }
     
     *start = address;
@@ -176,8 +177,9 @@ int check_dump(char* input, char* cmd, int* start, int* end, char* opt1, char* o
   if(sf == NONE && st == NONE && ef == NONE && et == NONE) {
     //  start, end 옵션 모두 없을 경우
    if(address >= MAX_MEM_SIZE) {
-      printf("End of memory\n");
-      return FALSE;
+//      printf("End of memory\n");
+//      return FALSE;
+        address = 0;
     }
     
     *start = address;
@@ -573,9 +575,9 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
 }
 
 int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
-  DIR* dp = NULL;
-  struct dirent* dir_entry;
-  struct stat dir_stat;
+  DIR* dp = NULL;             //  dirent.h
+  struct dirent* dir_entry;   //  dirent.h
+  struct stat dir_stat;       //  sys/stat.h
   char opt1[MAX_OPT] = {0, }, opt2[MAX_OPT] = {0, }, opt3[MAX_OPT] = {0, };
   char mnemonic[MNEMONIC] = {0, }, opcode[OPCODE] = {0, };
   char queue_input[INPUT_LEN] = {0, };  //  history queue에 삽입될 정제된 명령어
@@ -663,6 +665,8 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
       }
     }
     printf("\n");
+
+    closedir(dp);
     enqueue(cmd);
   }
 
@@ -740,7 +744,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
       return TRUE;  
     }
 
-    edit_value(addr, val);
+    edit_memory(addr, val);
     sprintf(queue_input, "%s %s, %s", cmd, opt1, opt2);
     enqueue(queue_input);
   }
@@ -753,7 +757,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
       return TRUE;
     } 
 
-    fill_value(start, end, value);
+    fill_memory(start, end, value);
     sprintf(queue_input, "%s %s, %s, %s", cmd, opt1, opt2, opt3);
     enqueue(queue_input);
   }
