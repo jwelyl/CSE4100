@@ -214,7 +214,8 @@ int check_dump(char* input, int opt_start, int* start, int* end, char* opt1, cha
         }
         hex *= 16;
       }
-      if(strlen(opt1) > 5)  //  00000 ~ FFFFF 범위를 초과할 경우 
+
+      if(*start >= MAX_MEM_SIZE)  //  start가 범위(00000 ~ FFFFF)를 초과할 경우
         return FALSE;
     }
     if(sf != NONE && st != NONE && ef == NONE && et == NONE) {
@@ -240,7 +241,7 @@ int check_dump(char* input, int opt_start, int* start, int* end, char* opt1, cha
           return FALSE;
         hex *= 16;
       }
-      if(strlen(opt2) > 5) //   00000 ~ FFFFF 범위를 초과할 경우
+      if(*end >= MAX_MEM_SIZE)  //  end가 범위(00000 ~ FFFFF)를 초과할 경우
         return FALSE;
 
       if(*end < *start)  //  [start, end] 범위가 잘못됨
@@ -371,12 +372,6 @@ int check_edit(char* input, int opt_start, int* addr, int* val, char* opt1, char
   if(af == NONE || at == NONE || vf == NONE || vt == NONE || !comma) 
     return FALSE;
 
-  if(at - af + 1 < 0 || at - af + 1 > 5)   //  address option 길이 확인
-    return FALSE;
-  
-  if(vt - vf + 1 < 0 || vt - vf + 1 > 2)   //  value option 길이 확인
-    return FALSE;
-
   for(i = af; i <= at; i++) {
     opt1[i - af] = input[i];
   }
@@ -403,6 +398,9 @@ int check_edit(char* input, int opt_start, int* addr, int* val, char* opt1, char
     hex *= 16;
   }
 
+  if(*addr >= MAX_MEM_SIZE) //  address 범위(00000 ~ FFFFF) 초과
+    return FALSE;
+
   hex = 1;
   for(i = vt - vf; i >= 0; i--) {
     if('0' <= opt2[i] && opt2[i] <= '9')
@@ -415,6 +413,9 @@ int check_edit(char* input, int opt_start, int* addr, int* val, char* opt1, char
       return FALSE;
     hex *= 16;
   }
+
+  if(*val >= 256) //  value 범위(00 ~ FF) 초과
+    return FALSE;
 
   return TRUE;
 }
@@ -509,15 +510,6 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
       || vf == NONE || vt == NONE || !comma1 || !comma2) 
     return FALSE;
 
-  if(st - sf + 1 < 0 || st - sf + 1 > 5)   //  start address 길이 확인
-    return FALSE;
-
-  if(et - ef + 1 < 0 || et - ef + 1 > 5)   //  end address 길이 확인
-    return FALSE;
-  
-  if(vt - vf + 1 < 0 || vt - vf + 1 > 2)   //  value address 길이 확인
-    return FALSE;
-
   for(i = sf; i <= st; i++)
     opt1[i - sf] = input[i];
   opt1[i] = '\0';
@@ -547,6 +539,9 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
     hex *= 16;
   }
 
+  if(*start >= MAX_MEM_SIZE)  //  start 범위(00000 ~ FFFFF) 초과
+    return FALSE;
+
   hex = 1;
   for(i = et - ef; i >= 0; i--) {
     if('0' <= opt2[i] && opt2[i] <= '9')
@@ -560,6 +555,9 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
     hex *= 16;
   }
 
+  if(*end >= MAX_MEM_SIZE)  //  end 범위(00000 ~ FFFFF) 초과
+    return FALSE;
+
   hex = 1;
   for(i = vt - vf; i >= 0; i--) {
     if('0' <= opt3[i] && opt3[i] <= '9')
@@ -572,6 +570,9 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
       return FALSE;
     hex *= 16;
   }
+
+  if(*value >= 256) //  value 범위(00 ~ FF) 초과
+    return FALSE;
 
   if(*start > *end) 
     return FALSE; 
