@@ -11,10 +11,11 @@ void clear_input_buffer() {
 
 int invalid_command(char* input, char* cmd) {
   int i;
+  int cmd_start = NONE, cmd_end = NONE;
   int input_over = TRUE;
   int cmd_len_over = FALSE;
   
-  for(i = 0; i < INPUT_LEN; i++) {
+  for(i = 0; i < INPUT_LEN; i++) {  //  입력받은 문장에서 '\n' 제거
     if(input[i] == '\n') {
       input[i] = '\0';
       input_over = FALSE;
@@ -209,7 +210,7 @@ int check_dump(char* input, char* cmd, int* start, int* end, char* opt1, char* o
         }
         hex *= 16;
       }
-      if(strlen(opt1) > 5) 
+      if(strlen(opt1) > 5)  //  00000 ~ FFFFF 범위를 초과할 경우 
         return FALSE;
     }
     if(sf != NONE && st != NONE && ef == NONE && et == NONE) {
@@ -235,7 +236,7 @@ int check_dump(char* input, char* cmd, int* start, int* end, char* opt1, char* o
           return FALSE;
         hex *= 16;
       }
-      if(strlen(opt2) > 5) 
+      if(strlen(opt2) > 5) //   00000 ~ FFFFF 범위를 초과할 경우
         return FALSE;
 
       if(*end < *start)  //  [start, end] 범위가 잘못됨

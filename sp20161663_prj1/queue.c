@@ -11,18 +11,10 @@ Node* alloc_node(char* input) { //  queue의 노드 동적 할당
   return node;
 }
 
-int is_queue_empty() {  //  queue가 비었는지 확인
-  return num == 0;
-}
-
-int num_of_elms() { //  queue의 원소 개수 반환
-  return num;
-}
-
 void enqueue(char* input) { //  queue에 삽입
   Node* newNode = alloc_node(input);
 
-  if(is_queue_empty())  //  queue가 빈 상태에서 삽입할 경우
+  if(!num)  //  queue가 빈 상태에서 삽입할 경우
     front = newNode;
   else rear->link = newNode;
 

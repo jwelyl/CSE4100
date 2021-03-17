@@ -9,8 +9,6 @@ typedef struct node { //  history queue에 저장될 명령어를 위한 노드 
 } Node;
 
 Node* alloc_node(char* input);
-int is_queue_empty();
-int num_of_elms();
 void enqueue(char* input);
 void print_queue();
 void delete_queue();
