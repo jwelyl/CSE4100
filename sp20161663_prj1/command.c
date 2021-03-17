@@ -9,11 +9,14 @@ void clear_input_buffer() {
   while(getchar() != '\n');
 }
 
-int invalid_command(char* input, char* cmd) {
+int invalid_command(char* input, char* cmd, int* opt_start) {
   int i;
   int input_over = TRUE;
-  int cmd_len_over = FALSE;
-  
+  int cmd_start = NONE, cmd_end = NONE; //  input 문자열에서 명령어 부분 시작, 끝 인덱스
+ 
+  //for(i = 0; i < MAX_CMD; i++)
+  //  cmd[i] = '\0';
+
   for(i = 0; i < INPUT_LEN; i++) {  //  입력받은 문장에서 '\n' 제거
     if(input[i] == '\n') {
       input[i] = '\0';
@@ -24,25 +27,48 @@ int invalid_command(char* input, char* cmd) {
 
   if(input_over) clear_input_buffer();
 
+  //
+  printf("입력 문장 : %s(%zu)\n", input, strlen(input));
+  //
+  
   i = 0;
-  while(TRUE) {
-    if(input[i] == ' ' || input[i] == '\0') {
-      cmd[i] = '\0';
+  while(TRUE) { //  입력 문장에서 명령어 부분만 추출
+    if(input[i] == '\0') {
+      if(cmd_start == NONE && cmd_end == NONE)  //  명령어가 없음
+        return TRUE;
+      else if(cmd_start != NONE && cmd_end == NONE)
+        cmd_end = i - 1;
+
       break;
     }
-    else if(i == MAX_CMD - 1) {
-      cmd_len_over = TRUE;
-      cmd[i] = '\0';
+
+    if(cmd_start == NONE && input[i] != ' ') {
+       cmd_start = i; 
+
+       //
+       printf("cmd_start = %d\n", cmd_start);
+        //
+    }
+    else if(cmd_start != NONE && cmd_end == NONE && input[i] == ' ') {
+      cmd_end = i - 1;
+
+      //
+      printf("cmd_end = %d\n", cmd_end);
+      //
+      
       break;
     }
-    cmd[i] = input[i];
+
     i++;
   }
 
-  if(cmd_len_over) {
-    printf("Invalid command\n");
-    return TRUE;
-  }
+  for(i = cmd_start; i <= cmd_end; i++)
+    cmd[i - cmd_start] = input[i];
+  cmd[i - cmd_start] = '\0';
+  *opt_start = i;
+  
+  
+  printf("추출한 명령어 : %s(%zu)\n", cmd, strlen(cmd));
 
   if(!strcmp(cmd, "help") || !strcmp(cmd, "h") || !strcmp(cmd, "dir") || !strcmp(cmd, "d") || 
      !strcmp(cmd, "quit") || !strcmp(cmd, "q") || !strcmp(cmd, "history") || !strcmp(cmd, "hi") || 
@@ -55,6 +81,11 @@ int invalid_command(char* input, char* cmd) {
   }
   else {  //  존재하지 않는 명령어 또는 띄어쓰기 없이 바로 option 입력
     printf("Invalid command\n");
+
+    //
+    printf("그딴 명령 나는 모르오.");
+    //
+
     return TRUE;
   }
 }
@@ -574,7 +605,7 @@ int check_fill(char* input, char* cmd, int* start, int* end, int* value,
   return TRUE;
 }
 
-int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
+int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
   DIR* dp = NULL;             //  dirent.h
   struct dirent* dir_entry;   //  dirent.h
   struct stat dir_stat;       //  sys/stat.h
@@ -584,17 +615,9 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
  
   //  q[uit]
   if(!strcmp(cmd, "quit") || !strcmp(cmd, "q")) {
-    if(!strcmp(cmd, "quit")) {
-      if(!check_no_opt(input, 4)) {
-        printf("유효하지 않은 q[uit] 명령\n");
-        return TRUE;
-      }
-    } 
-    else {
-      if(!check_no_opt(input, 1)) {
-        printf("유효하지 않은 q[uit] 명령\n");
-        return TRUE;
-      }
+    if(!check_no_opt(input, opt_start)) {
+      printf("유효하지 않은 q[uit] 명령\n");
+      return TRUE;
     }
     delete_queue();
     delete_optable();
@@ -603,18 +626,9 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
  
   //  h[elp]
   if(!strcmp(cmd, "help") || !strcmp(cmd, "h")) {
-    
-    if(!strcmp(cmd, "help")) {
-      if(!check_no_opt(input, 4)) {
-        printf("유효하지 않은 h[elp] 명령\n");
-        return TRUE;
-      }
-    } 
-    else {
-      if(!check_no_opt(input, 1)) {
-        printf("유효하지 않은 h[elp] 명령\n");
-        return TRUE;
-      }
+    if(!check_no_opt(input, opt_start)) {
+      printf("유효하지 않은 h[elp] 명령\n");
+      return TRUE;
     }
 
     printf("\n\th[elp]");
@@ -633,18 +647,9 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
 
   //  d[ir]
   else if(!strcmp(cmd, "dir") || !strcmp(cmd, "d")) {
-    
-    if(!strcmp(cmd, "dir")) {
-      if(!check_no_opt(input, 3)) {
-        printf("유효하지 않은 d[ir] 명령\n");
-        return TRUE;
-      }
-    } 
-    else {
-      if(!check_no_opt(input, 1)) {
-        printf("유효하지 않은 d[ir] 명령\n");
-        return TRUE;
-      }
+    if(!check_no_opt(input, opt_start)) {
+      printf("유효하지 않은 d[ir] 명령\n");
+      return TRUE;
     }
     
     if((dp = opendir(".")) == NULL) {
@@ -672,18 +677,9 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
 
   //  hi[story]
   else if(!strcmp(cmd, "history") || !strcmp(cmd, "hi")) {
-    
-    if(!strcmp(cmd, "history")) {
-      if(!check_no_opt(input, 7)) {
-        printf("유효하지 않은 hi[story] 명령\n");
-        return TRUE;
-      }
-    } 
-    else {
-      if(!check_no_opt(input, 2)) {
-        printf("유효하지 않은 hi[story] 명령\n");
-        return TRUE;
-      }
+    if(!check_no_opt(input, opt_start)) {
+      printf("유효하지 않은 hi[story] 명령\n");
+      return TRUE;
     }
 
     enqueue(cmd);
@@ -692,7 +688,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
 
   //  reset
   else if(!strcmp(cmd, "reset")) {
-    if(!check_no_opt(input, 5)) {
+    if(!check_no_opt(input, opt_start)) {
       printf("유효하지 않은 reset 명령\n");
       return TRUE;
     }
@@ -703,7 +699,7 @@ int process_command(char* cmd, char* input) { //  qu[it] 명령 수행 시 FALSE
   //  opcodelist
   else if(!strcmp(cmd, "opcodelist")) {
     
-     if(!check_no_opt(input, 10)) {
+     if(!check_no_opt(input, opt_start)) {
         printf("유효하지 않은 opcodelist 명령\n");
         return TRUE;
      }
