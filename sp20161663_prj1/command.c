@@ -69,10 +69,10 @@ int invalid_command(char* input, char* cmd, int* opt_start) {
  * 명령어만 입력받았는지 확인
  * 불필요한 옵션이 있을 경우 FALSE 반환
  */
-int check_no_opt(char* input, int start) {
-  if(input[start] == '\0') return TRUE;
+int check_no_opt(char* input, int opt_start) {
+  if(input[opt_start] == '\0') return TRUE;
   
-  int i = start;
+  int i = opt_start;
   for(; i < INPUT_LEN; i++) {
     if(input[i] == '\0') break;
     else if(input[i] == ' ') continue;
