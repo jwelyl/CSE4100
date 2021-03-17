@@ -11,7 +11,6 @@ void clear_input_buffer() {
 
 int invalid_command(char* input, char* cmd) {
   int i;
-  int cmd_start = NONE, cmd_end = NONE;
   int input_over = TRUE;
   int cmd_len_over = FALSE;
   
