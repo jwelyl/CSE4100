@@ -34,10 +34,10 @@ int invalid_command(char* input, char* cmd, int* opt_start) {
       break;
     }
 
-    if(cmd_start == NONE && input[i] != ' ') 
+    if(cmd_start == NONE && (input[i] != ' ' && input[i] != '\t')) 
        cmd_start = i; 
     
-    else if(cmd_start != NONE && cmd_end == NONE && input[i] == ' ') { 
+    else if(cmd_start != NONE && cmd_end == NONE && (input[i] == ' ' || input[i] == '\t')) { 
       cmd_end = i - 1;
       break;
     }
@@ -75,7 +75,7 @@ int check_no_opt(char* input, int opt_start) {
   int i = opt_start;
   for(; i < INPUT_LEN; i++) {
     if(input[i] == '\0') break;
-    else if(input[i] == ' ') continue;
+    else if(input[i] == ' ' || input[i] == '\t') continue;
     else return FALSE;
   }
 
@@ -131,12 +131,12 @@ int check_dump(char* input, int opt_start, int* start, int* end, char* opt1, cha
         break;
       } //  if '\0' end
 
-      if(sf == NONE && input[i] != ' ') { //  start option 시작 부분 발견
+      if(sf == NONE && (input[i] != ' ' && input[i] != '\t')) { //  start option 시작 부분 발견
         sf = i;
         opt1[i - sf] = input[i];
       }
       else if(sf != NONE && st == NONE) { //  start option 끝 부분 찾는 중
-        if(input[i] == ' ' || input[i] == ',') {  //  start option 끝 부분 발견
+        if(input[i] == ' ' || input[i] == '\t' || input[i] == ',') {  //  start option 끝 부분 발견
           if(input[i] == ',') comma = TRUE;
 
           st = i - 1;
@@ -145,7 +145,7 @@ int check_dump(char* input, int opt_start, int* start, int* end, char* opt1, cha
         else opt1[i - sf] = input[i];
       }
       else if(st != NONE && !comma) { //  start option 찾은 뒤 ',' 찾는 중
-        if(input[i] != ',' && input[i] != ' ') { // ',' 이전에 end option이 나올 경우
+        if(input[i] != ',' && input[i] != ' ' && input[i] != '\t') { // ',' 이전에 end option이 나올 경우
           return FALSE;
         }
         else if(input[i] == ',') { // ','를 찾은 경우
@@ -153,13 +153,13 @@ int check_dump(char* input, int opt_start, int* start, int* end, char* opt1, cha
         }
       }
       else if(comma && ef == NONE) {  //  ',' 찾은 뒤 end option 찾는 중
-        if(input[i] != ' ') { //  end option 시작 부분 발견
+        if(input[i] != ' ' && input[i] != '\t') { //  end option 시작 부분 발견
           ef = i;
           opt2[i - ef] = input[i];
         }
       }
       else if(ef != NONE && et == NONE) { //  end option 끝 부분 찾는 중
-        if(input[i] == ' ') { //  end option 끝 부분 발견
+        if(input[i] == ' ' || input[i] == '\t') { //  end option 끝 부분 발견
           et = i - 1;
           opt2[i - ef] = '\0';
         }
@@ -168,7 +168,7 @@ int check_dump(char* input, int opt_start, int* start, int* end, char* opt1, cha
         }
       }
       else if(et != NONE) {
-        if(input[i] != ' ') { //  end option 이후 다른 option 발견
+        if(input[i] != ' ' && input[i] != '\t') { //  end option 이후 다른 option 발견
           return FALSE;
         }
       }
@@ -272,7 +272,7 @@ int check_opcode(char* input, int opt_start, char* mnemonic, char* opcode) {
         break;
     } //  if-'\0' end
     
-    else if(input[i] != ' ' && (input[i] < 'A' || 'Z' < input[i]))   //  유효하지 않은 mnemonic
+    else if((input[i] != ' ' && input[i] != '\t') && (input[i] < 'A' || 'Z' < input[i]))   //  유효하지 않은 mnemonic
         return FALSE;
 
     else if(ms == NONE && ('A' <= input[i] && input[i] <= 'Z')) { //  mnemonic start index 찾음
@@ -281,7 +281,7 @@ int check_opcode(char* input, int opt_start, char* mnemonic, char* opcode) {
     }
 
     else if(ms != NONE && me == NONE) { //  mnemonic start index를 찾은 상태에서
-      if(input[i] == ' ') {
+      if(input[i] == ' ' || input[i] == '\t') {
         me = i - 1;
         continue;
       }
@@ -289,7 +289,7 @@ int check_opcode(char* input, int opt_start, char* mnemonic, char* opcode) {
     }
 
     else if(me != NONE) {
-      if(input[i] == ' ') continue;
+      if(input[i] == ' ' || input[i] == '\t') continue;
       else if('A' <= input[i] && input[i] <= 'Z') 
         return FALSE;
     }
@@ -335,11 +335,11 @@ int check_edit(char* input, int opt_start, int* addr, int* val, char* opt1, char
         break;
       } //  if '\0' end 
 
-      if(af == NONE && input[i] != ' ')  //  address option 시작 부분 발견
+      if(af == NONE && input[i] != ' ' && input[i] != '\t')  //  address option 시작 부분 발견
         af = i;
 
       else if(af != NONE && at == NONE) {  //  address option 끝 부분 찾는 중
-        if(input[i] == ' ' || input[i] == ',') {  //  address option 끝 부분 발견
+        if(input[i] == ' ' || input[i] == '\t' || input[i] == ',') {  //  address option 끝 부분 발견
           if(input[i] == ',') comma = TRUE;
 
           at = i - 1;
@@ -347,23 +347,23 @@ int check_edit(char* input, int opt_start, int* addr, int* val, char* opt1, char
       }
 
       else if(at != NONE && !comma) { //  address option 찾은 뒤 ',' 찾는 중
-        if(input[i] != ',' && input[i] != ' ')   //  ',' 이전에 value option이 나올 경우
+        if(input[i] != ',' && input[i] != ' ' && input[i] != '\t')   //  ',' 이전에 value option이 나올 경우
           return FALSE;
         else if(input[i] == ',')   //  ','를 찾은 경우
           comma = TRUE;
       }
       
       else if(comma && vf == NONE) {  // ',' 찾은 뒤 value option 찾는 중
-        if(input[i] != ' ')  //  value option 시작 부분 발견
+        if(input[i] != ' ' && input[i] != '\t')  //  value option 시작 부분 발견
           vf = i;
       }
 
       else if(vf != NONE && vt == NONE) { //  value option 끝 부분 찾는 중
-        if(input[i] == ' ')  //  value option 끝 부분 발견
+        if(input[i] == ' ' || input[i] == '\t')  //  value option 끝 부분 발견
           vt = i - 1;
       }
       else if(vt != NONE) { 
-        if(input[i] != ' ')  //  value option 이후 다른 option 발견
+        if(input[i] != ' ' && input[i] != '\t')  //  value option 이후 다른 option 발견
           return FALSE;
       }
     } //  for end
@@ -448,11 +448,11 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
         break;
       } //  if '\0' end
 
-      if(sf == NONE && input[i] != ' ')  //  start option 시작 부분 발견
+      if(sf == NONE && input[i] != ' ' && input[i] != '\t')  //  start option 시작 부분 발견
         sf = i;
 
       else if(sf != NONE && st == NONE) { //  start option 끝 부분 찾는 중
-        if(input[i] == ' ' || input[i] == ',') {  //  start option 끝 부분 발견
+        if(input[i] == ' ' || input[i] == '\t' || input[i] == ',') {  //  start option 끝 부분 발견
           if(input[i] == ',') 
             comma1 = TRUE;
 
@@ -461,19 +461,19 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
       }
 
       else if(st != NONE && !comma1) {  //  start option 찾은 뒤 ',' 찾는 중
-        if(input[i] != ',' && input[i] != ' ')   //  첫번째 ',' 이전에 end option이 나올 경우
+        if(input[i] != ',' && input[i] != ' ' && input[i] != '\t')   //  첫번째 ',' 이전에 end option이 나올 경우
           return FALSE;  
         else if(input[i] == ',')   //  첫번째 ','를 찾은 경우
           comma1 = TRUE;
       }
 
       else if(comma1 && ef == NONE) { //  첫번째 ',' 찾은 뒤 end option 찾는 중
-        if(input[i] != ' ')  //  end option 시작 부분 발견
+        if(input[i] != ' ' && input[i] != '\t')  //  end option 시작 부분 발견
           ef = i;
       }
 
       else if(ef != NONE && et == NONE) { //  end option 끝 부분 찾는 중
-        if(input[i] == ' ' || input[i] == ',') {  //  end option 끝 부분 발견
+        if(input[i] == ' ' || input[i] == '\t' || input[i] == ',') {  //  end option 끝 부분 발견
           if(input[i] == ',') 
             comma2 = TRUE;
 
@@ -482,24 +482,24 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
       }
 
       else if(et != NONE && !comma2) {  //  end option 찾은 뒤 ',' 찾는 중
-        if(input[i] != ',' && input[i] != ' ')   //  두번째 ',' 이전에 value option이 나올 경우
+        if(input[i] != ',' && input[i] != ' ' && input[i] != '\t')   //  두번째 ',' 이전에 value option이 나올 경우
           return FALSE;  
         else if(input[i] == ',')   //  두번째 ','를 찾은 경우
           comma2 = TRUE;
       }
 
       else if(comma2 && vf == NONE) { //  두 번째 ',' 찾은 뒤 value option 찾는 중
-        if(input[i] != ' ')  //  value option 시작 부분 발견
+        if(input[i] != ' ' && input[i] != '\t')  //  value option 시작 부분 발견
           vf = i;
       }
 
       else if(vf != NONE && vt == NONE) { //  value option 끝 부분 찾는 중
-        if(input[i] == ' ')  //  value option 끝 부분 발견
+        if(input[i] == ' ' || input[i] == '\t')  //  value option 끝 부분 발견
           vt = i - 1;
       }
 
       else if(vt != NONE) {
-        if(input[i] != ' ') { //  value option 이후 다른 option 발견
+        if(input[i] != ' ' || input[i] != '\t') { //  value option 이후 다른 option 발견
           return FALSE;
         }
       }
