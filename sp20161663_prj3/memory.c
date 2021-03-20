@@ -1,6 +1,6 @@
 #include "memory.h"
 
-void reset_to_zero(char* hex, int len) {  //  16진수 0으로 초기화
+void reset_to_zero(char* hex, int len) {  //  배열을 16진수 0으로 초기화
   int i;
   
   for(i = 0; i < len - 1; i++)
@@ -8,7 +8,7 @@ void reset_to_zero(char* hex, int len) {  //  16진수 0으로 초기화
   hex[i] = '\0';
 }
 
-void dec_to_hex(int dec, char* hex, int len) {
+void dec_to_hex(int dec, char* hex, int len) {  //  10진수를 16진수로 변경하여 배열에 저장
   int i, r;
 
   reset_to_zero(hex, len);
@@ -28,13 +28,13 @@ void dec_to_hex(int dec, char* hex, int len) {
   }
 }
 
-void reset_memory() {
+void reset_memory() { //  메모리 공간 전체를 0으로 변경
   int i = 0;
   for(i = 0; i < MAX_MEM_SIZE; i++)
     memory[i] = 0;
 }
 
-void dump_memory(int start, int end) {
+void dump_memory(int start, int end) {  //  메모리의 start번지부터 end 번지까지 형식에 맞게 출력
   int i, j;
   int start_line = start / 16;
   int end_line = end / 16;
@@ -42,22 +42,22 @@ void dump_memory(int start, int end) {
   int addr;     //  각 라인의 시작 주소(0, 16, 32, ...)
   int addr_end; //  각 라인의 끝 주소(15, 31, 47, ...)
 
-  char addr_col[ADDRESS_COL];
-  char hex_col[HEX_COL];
+  char addr_col[ADDRESS_COL]; //  메모리 주소를 출력하기 위한 배열
+  char hex_col[HEX_COL];  //  메모리에 저장된 값 출력하기 위한 배열
 
   for(i = start_line; i <= end_line; i++) {
     addr = i * 16;
     addr_end = addr + 15;
   
-    dec_to_hex(addr, addr_col, ADDRESS_COL);
+    dec_to_hex(addr, addr_col, ADDRESS_COL);  //  메모리 주소를 16진수로 변경
     printf("%s ", addr_col);
 
-    if(i == start_line && i == end_line) {  //  한 줄 출력
+    if(i == start_line && i == end_line) {  //   출력 내용이 한 줄에 포함될 경우
       for(j = addr; j < start; j++)
         printf("   ");
   
       for(j = start; j <= end; j++) {
-        dec_to_hex(memory[j], hex_col, HEX_COL);
+        dec_to_hex(memory[j], hex_col, HEX_COL);  //  메모리에 저장된 값을 16진수로 변경
         printf("%s ", hex_col);
       }
 
@@ -69,7 +69,7 @@ void dump_memory(int start, int end) {
         printf(".");
   
       for(j = start; j <= end; j++) {
-        if(32 <= memory[j] && memory[j] <= 126) {
+        if(32 <= memory[j] && memory[j] <= 126) { //  출력 가능 범위
           printf("%c", memory[j]);
         }
         else printf(".");
@@ -142,11 +142,11 @@ void dump_memory(int start, int end) {
   } //  for - end
 }
 
-void edit_value(int addr, int val) {
+void edit_memory(int addr, int val) {  //  메모리의 addr번지의 값을 val로 변경
   memory[addr] = val;
 }
 
-void fill_value(int start, int end, int val) {
+void fill_memory(int start, int end, int val) {  //  메모리의 start번지부터 end번지까지의 값을 val로 변경
   int i;
 
   for(i = start; i <= end; i++)
