@@ -6,7 +6,7 @@ int main(void) {
   int i;
 
   for(i = 32 ; i <= 126; i++) {
-    fprintf(fp, "char : %c | dec : %d | hex : %X\n", i, i, i);
+    fprintf(fp, "char : %c | dec : %3d | hex : %X\n", i, i, i);
   }
   fclose(fp);
 
