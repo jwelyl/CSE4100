@@ -59,6 +59,9 @@ int invalid_command(char* input, char* cmd, int* opt_start) {
      return FALSE;
   }
   else {  //  존재하지 않는 명령어 또는 띄어쓰기 없이 바로 option 입력
+    //
+ //   printf("%s(%zu)\n", cmd, strlen(cmd));
+    //
     printf("Invalid command\n");
     return TRUE;
   }

@@ -126,6 +126,11 @@ int hash_function(char* mnemonic) {
 
 void make_optable() { //  opcode.txt 파일을 읽어서 hash-table인 optable 생성
   FILE* fp = fopen("opcode.txt", "r");
+  if(!fp) {
+    printf("'opcode.txt' file does not exist.\n");
+    exit(-1);
+  }
+
   char input[OPCODE_INPUT]; //  파일에서 한 줄씩 읽기 위한 배열
   char opcode[OPCODE];  //  opcode 저장용 배열
   char mnemonic[MNEMONIC];  //  mnemonic 저장용 배열
