@@ -54,7 +54,7 @@ int invalid_command(char* input, char* cmd, int* opt_start) {
      !strcmp(cmd, "quit") || !strcmp(cmd, "q") || !strcmp(cmd, "history") || !strcmp(cmd, "hi") || 
      !strcmp(cmd, "dump") || !strcmp(cmd, "du") || !strcmp(cmd, "edit") || !strcmp(cmd, "e") || 
      !strcmp(cmd, "fill") || !strcmp(cmd, "f") || !strcmp(cmd, "reset") || !strcmp(cmd, "opcode") || 
-     !strcmp(cmd, "opcodelist")) {
+     !strcmp(cmd, "opcodelist") || !strcmp(cmd, "assemble") || !strcmp(cmd, "type") || !strcmp(cmd, "symbol")) {
       
      return FALSE;
   }
@@ -309,6 +309,65 @@ int check_opcode(char* input, int opt_start, char* mnemonic, char* opcode) {
     return FALSE;
 
   printf("opcode is %s\n", opcode);
+  return TRUE;
+}
+
+//  assemble, type 명령어 option 찾기
+//  두 명령어 모두 같은 option을 요구하므로 하나의 함수로 option을 체크할수 있다.
+int check_assemble_or_type(char* input, int opt_start, char* filename) {
+  int i;
+  int fs = NONE, fe = NONE; //  filename 옵션의 존재 여부 check(filename 시작 index, 끝 index)
+
+  if(input[opt_start] == '\0') // filename 없이 명령이 끝난 경우
+    return FALSE;
+
+  for(i = opt_start + 1; i < INPUT_LEN; i++) {
+    if(input[i] == '\0') {
+      if(fs == NONE && fe == NONE) // filename option을 발견하지 못하고 명령이 끝난 경우
+        return FALSE;
+      else if(fs != NONE && fe == NONE) { //  filename option 후에 바로 명령이 끝난 경우
+        fe = i - 1;
+        break;
+      }
+      else if(fs != NONE && fe != NONE) //  filename option 후에 ' '만 존재하고 명령이 끝난 경우
+        break;
+    } //  if-'\0' end
+
+    /*
+    else if((input[i] != ' ' && input[i] != '\t') && (input[i] < 'A' || 'Z' < input[i]) &&
+            (input[i] < 'a' || 'z' < input[i]) && (input[i] < '0' || '9' < input[i]) && input[i] != '.')
+      return FALSE; //  유효하지 않은 filename
+    
+    else if(fs == NONE && (('A' <= input[i] && input[i] <= 'Z') || 
+            ('a' <= input[i] && input[i] <= 'z') || ('0' <= input[i] && input[i] <= '9'))) {
+      //  filename start indexfmf ckwdma
+      fs = i;
+      continue;
+    }
+    */
+
+    else if(fs == NONE && (input[i] != ' ' && input[i] != '\t')) {  //  filename start index 찾음
+      fs = i;
+      continue;
+    }
+
+    else if(fs != NONE && fe == NONE) { //  filename start index를 찾은 상태에서
+      if(input[i] == ' ' || input[i] == '\t') {
+        fe = i - 1;
+        continue;
+      }
+      else continue;
+    }
+
+    else if(fe != NONE) {
+      if(input[i] == ' ' || input[i] == '\t') continue;
+      else return FALSE;
+    }
+  } //  for-end
+
+  for(i = fs; i <= fe; i++)
+    filename[i - fs] = input[i];
+  filename[i] = '\0';
   return TRUE;
 }
 
@@ -583,12 +642,14 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
   return TRUE;
 }
 
+
 int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
   DIR* dp = NULL;             //  dirent.h
   struct dirent* dir_entry;   //  dirent.h
   struct stat dir_stat;       //  sys/stat.h
   char opt1[MAX_OPT] = {0, }, opt2[MAX_OPT] = {0, }, opt3[MAX_OPT] = {0, };
   char mnemonic[MNEMONIC] = {0, }, opcode[OPCODE] = {0, };
+  char filename[FILENAME] = {0, };
   char queue_input[INPUT_LEN] = {0, };  //  history queue에 삽입될 정제된 명령어
  
   //  q[uit]
@@ -679,7 +740,6 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
 
   //  opcodelist
   else if(!strcmp(cmd, "opcodelist")) {
-    
      if(!check_no_opt(input, opt_start)) {
         printf("유효하지 않은 opcodelist 명령\n");
         return TRUE;
@@ -687,6 +747,19 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
 
      print_optable();
      enqueue(cmd);
+  }
+
+  //  symbol
+  else if(!strcmp(cmd, "symbol")) {
+    if(!check_no_opt(input, opt_start)) {
+      printf("유효하지 않은 symbol 명령\n");
+      return TRUE;
+    }
+
+    //
+    printf("symbol 명령어는 구현 예정\n");
+    //
+    enqueue(cmd);
   }
   
   //  option 필요한 명령어
@@ -745,6 +818,32 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       return TRUE;
     }
     sprintf(queue_input, "%s %s", cmd, mnemonic);
+    enqueue(queue_input);
+  }
+  //  assemble
+  else if(!strcmp(cmd, "assemble")) {
+    if(!check_assemble_or_type(input, opt_start, filename)) {
+      printf("유효하지 않은 assemble 명령\n");
+      return TRUE; 
+    }
+
+    //
+    printf("assemble 명령어는 구현 예정\n");
+    //
+    sprintf(queue_input, "%s %s", cmd, filename);
+    enqueue(queue_input);
+  }
+  //  type
+  else if(!strcmp(cmd, "type")) {
+    if(!check_assemble_or_type(input, opt_start, filename)) {
+      printf("유효하지 않은 type 명령\n");
+      return TRUE;
+    }
+
+    //
+    printf("type 명령어는 구현 예정\n");
+    //
+    sprintf(queue_input, "%s %s", cmd, filename);
     enqueue(queue_input);
   }
 

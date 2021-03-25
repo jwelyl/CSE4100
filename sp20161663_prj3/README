@@ -18,6 +18,9 @@ f[ill] start, end, value : fill value stored from start address to end address
 reset : reset all memory to 0
 opcode mnemonic : prints an opcode corresponding to the mnemonic
 opcodelist : prints opcode hash table
+assemble filename : makes object file and listing file of filename
+type filename : prints contents of filename
+symbol : prints symbol table
 
 ### How to clean
 make clean

@@ -25,6 +25,9 @@
 
 /* dump 명령어에 사용할 배열 크기 */
 #define ADDRESS_COL        6
-#define HEX_COL            3 
+#define HEX_COL            3
+
+/* filename 크기 */
+#define FILENAME          30
 
 #endif
