@@ -609,16 +609,19 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       return TRUE;
     }
 
-    printf("\n\th[elp]");
-    printf("\n\td[ir]");
-    printf("\n\tq[uit]");
-    printf("\n\thi[story]");
-    printf("\n\tdu[mp] [start, end]");
-    printf("\n\te[dit] address, value");
-    printf("\n\tf[ill] start, end, value");
-    printf("\n\treset");
-    printf("\n\topcode mnemonic");
-    printf("\n\topcodelist\n\n");
+    printf("h[elp]");
+    printf("\nd[ir]");
+    printf("\nq[uit]");
+    printf("\nhi[story]");
+    printf("\ndu[mp] [start, end]");
+    printf("\ne[dit] address, value");
+    printf("\nf[ill] start, end, value");
+    printf("\nreset");
+    printf("\nopcode mnemonic");
+    printf("\nopcodelist");
+    printf("\nassemble filename");
+    printf("\ntype filename");
+    printf("\nsymbol\n");
     
     enqueue(cmd);
   }
