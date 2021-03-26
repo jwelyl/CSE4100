@@ -651,6 +651,8 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
   char mnemonic[MNEMONIC] = {0, }, opcode[OPCODE] = {0, };
   char filename[FILENAME] = {0, };
   char queue_input[INPUT_LEN] = {0, };  //  history queue에 삽입될 정제된 명령어
+  FILE* fp = NULL;
+  char file_read[INPUT_LEN];
  
   //  q[uit]
   if(!strcmp(cmd, "quit") || !strcmp(cmd, "q")) {
@@ -840,9 +842,16 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       return TRUE;
     }
 
-    //
-    printf("type 명령어는 구현 예정\n");
-    //
+    fp = fopen(filename, "r");
+    if(!fp) {
+      printf("%s 파일이 존재하지 않음\n", filename);
+      return TRUE;
+    }
+
+    while(fgets(file_read, INPUT_LEN, fp))
+      printf("%s", file_read);
+
+    fclose(fp);
     sprintf(queue_input, "%s %s", cmd, filename);
     enqueue(queue_input);
   }
