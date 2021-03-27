@@ -17,7 +17,7 @@
 #define MAX_CMD           11
 #define MAX_OPT           11
 
-/* opcode, opcodelist 명령어에 사용할 배열 크기 명령*/
+/* opcode, opcodelist 명령어에 사용할 배열 크기 */
 #define MNEMONIC           7
 #define OPCODE             3
 #define OPCODE_INPUT      30

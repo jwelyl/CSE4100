@@ -824,16 +824,47 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
   }
   //  assemble
   else if(!strcmp(cmd, "assemble")) {
-    if(!check_assemble_or_type(input, opt_start, filename)) {
-      printf("유효하지 않은 assemble 명령\n");
-      return TRUE; 
+    int error_flag = FALSE, i;
+    char extension[5] = {0};
+
+    if(!check_assemble_or_type(input, opt_start, filename)) 
+      error_flag = TRUE; 
+
+    //  입력받은 소스 파일명 길이 확인
+    if(strlen(filename) < 5) { // 파일명 길이가 확장자 .asm 포함하여 5보다 작을 경우
+        printf("유효하지 않은 파일명 %s\n", filename);
+        error_flag = TRUE;
+    }
+    //  입력받은 소스 파일 확장자 확인
+    else {
+      for(i = strlen(filename) - 4; i < strlen(filename); i++)
+        extension[i - strlen(filename) + 4] = filename[i];
+
+      if(strcmp(extension, ".asm")) {
+        printf("입력 파일 %s가  assembly source file이 아님.\n", filename);
+        error_flag = TRUE;
+      }
+
+      else {
+        fp = fopen(filename, "r");
+        if(!fp) {
+          printf("입력 파일 %s가 존재하지 않음.\n", filename);
+          error_flag = TRUE;
+        }
+      }
     }
 
-    //
-    printf("assemble 명령어는 구현 예정\n");
-    //
-    sprintf(queue_input, "%s %s", cmd, filename);
-    enqueue(queue_input);
+    if(!error_flag) {
+      //
+      printf("assemble 명령어는 구현 예정\n");
+      //
+      sprintf(queue_input, "%s %s", cmd, filename);
+      enqueue(queue_input);
+    }
+    else {
+      printf("유효하지 않은 assemble 명령\n");
+      return TRUE;
+    }
   }
   //  type
   else if(!strcmp(cmd, "type")) {
@@ -852,6 +883,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       printf("%s", file_read);
 
     fclose(fp);
+    fp = NULL;
     sprintf(queue_input, "%s %s", cmd, filename);
     enqueue(queue_input);
   }
