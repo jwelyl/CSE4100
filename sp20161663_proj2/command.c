@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "queue.h"
 #include "optable.h"
+#include "assemble.h"
 
 int address = 0;
 
@@ -855,6 +856,9 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     }
 
     if(!error_flag) {
+
+      pass_1(filename, fp);
+
       //
       printf("assemble 명령어는 구현 예정\n");
       //

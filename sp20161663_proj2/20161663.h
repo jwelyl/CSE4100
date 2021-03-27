@@ -11,6 +11,7 @@
 #define TRUE               1
 #define NONE              -1
 
+/* Proj1 */
 /* 1MB 메모리 공간 크기*/
 #define MAX_MEM_SIZE 1048576
 #define INPUT_LEN        100
@@ -27,7 +28,17 @@
 #define ADDRESS_COL        6
 #define HEX_COL            3
 
+/* Proj2 */
 /* filename 크기 */
 #define FILENAME          30
+
+/* symbol table 크기*/
+#define SYMTAB_SIZE       13
+
+/* LABLE, OPCODE, OPERAND 크기 */
+#define STRING_SIZE       30
+
+/* LOCCTR 크기 */
+#define LOCCTR_SIZE        5
 
 #endif

@@ -16,6 +16,6 @@ clean:
 queue.o: 20161663.h queue.h queue.c
 optable.o: 20161663.h optable.h optable.c
 memory.o: 20161663.h memory.h memory.c
-command.o: 20161663.h queue.h command.h queue.c command.c
+command.o: 20161663.h queue.h command.h assemble.h queue.c command.c
 assemble.o : 20161663.h assemble.h assemble.c
-symtable.o : 20161663.h symtable.h symtable.c
+symtable.o : 20161663.h memory.h symtable.h symtable.c
