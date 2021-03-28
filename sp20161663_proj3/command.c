@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "queue.h"
 #include "optable.h"
+#include "assemble.h"
 
 int address = 0;
 
@@ -649,9 +650,14 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
   struct stat dir_stat;       //  sys/stat.h
   char opt1[MAX_OPT] = {0, }, opt2[MAX_OPT] = {0, }, opt3[MAX_OPT] = {0, };
   char mnemonic[MNEMONIC] = {0, }, opcode[OPCODE] = {0, };
-  char filename[FILENAME] = {0, };
+  char filename[FILENAME] = {0, };  //  입력 파일명
+  char lst_filename[FILENAME] = {0, };  //  lst 파일명
+  char obj_filename[FILENAME] = {0, };  //  obj 파일명
   char queue_input[INPUT_LEN] = {0, };  //  history queue에 삽입될 정제된 명령어
-  FILE* fp = NULL;
+  FILE* fp = NULL;  //  입력 파일 포인터
+  FILE* fp_lst = NULL;  //  lst 파일 포인터
+  FILE* fp_obj = NULL;  //  obj 파일 포인터
+
   char file_read[INPUT_LEN];
  
   //  q[uit]
@@ -855,6 +861,12 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     }
 
     if(!error_flag) {
+
+      if(!pass_1(filename, lst_filename, fp, &fp_lst)) {
+        remove(lst_filename);
+        return TRUE;
+      }
+
       //
       printf("assemble 명령어는 구현 예정\n");
       //

@@ -31,6 +31,7 @@
 /* Proj2 */
 /* filename 크기 */
 #define FILENAME          30
+#define PROGRAM_NAME       7
 
 /* symbol table 크기*/
 #define SYMTAB_SIZE       13
