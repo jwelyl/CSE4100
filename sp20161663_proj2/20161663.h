@@ -42,4 +42,15 @@
 /* LOCCTR 크기 */
 #define LOCCTR_SIZE        5
 
+/* register mnemonic */
+#define A                  0
+#define X                  1
+#define L                  2
+#define B                  3
+#define S                  4
+#define T                  5
+#define F                  6
+#define PC                 8
+#define SW                 9
+
 #endif

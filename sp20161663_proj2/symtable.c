@@ -2,6 +2,8 @@
 #include "memory.h"
 
 SymTabNode* st_head[SYMTAB_SIZE];
+SymTabNode* lastest_symtable[INPUT_LEN];
+
 SymTabNode* allocSTN(char* label, int locctr) {
   SymTabNode* node = (SymTabNode*)malloc(sizeof(SymTabNode));
   strcpy(node->label, label);

@@ -55,6 +55,8 @@ int process_input_string(char* input,
   int* ls, int* le, int* ms, int* me, int* os, int* oe) {
   //  assembly source file을 한 줄씩 읽어서 label, opcode_mnemonic, operand를 분리
   //  정상 처리되면 TRUE, 에러 발생시 FALSE 반환함
+  int comma = FALSE;    //  operand가 두 개일경우 구분
+  int sec_opr = FALSE;  //  second operand  
   int i;
 
   if(input[0] == '.') // 해당 줄은 주석 또는 빈 줄이므로 더 처리할 게 없음
@@ -64,8 +66,16 @@ int process_input_string(char* input,
       if(input[i] == '\0') {
         if(*ms != NONE && *me == NONE)  //  mnemonic만 있고 문자열이 끝날 경우
           *me = i - 1;
-        else if(*os != NONE && *oe == NONE) //  operand까지 있고 문자열이 끝날 경우
-          *oe = i - 1;
+        else if(*os != NONE && *oe == NONE) {  //  operand까지 있을 경우
+          if(comma && !sec_opr) { //  comma는 있는데 second operand를 못찾았을 경우
+            printf("Assembly source file error at line %d\n", line);
+            return FALSE;
+          }
+
+          else if(!comma || (comma && sec_opr)) //  단일 operand거나, operand 두 개를 모두 찾았을 경우
+            *oe = i - 1;
+        }
+
         break;
       } //  if-'\0' end
 
@@ -83,7 +93,19 @@ int process_input_string(char* input,
       }
 
       else if(*os != NONE && *oe == NONE) {  //  operand end finding
-        if(input[i] == ' ' || input[i] == '\t') //  find operand end
+        if(!comma && (input[i] == ' ' || input[i] == '\t')) //  find operand end without comma
+          *oe = i - 1;
+
+        else if(input[i] == ',') // find ','
+          comma = TRUE;
+
+        else if(comma && !sec_opr && (input[i] == ' ' || input[i] == '\t')) // continue to find second operand
+          continue;
+
+        else if(comma && !sec_opr && input[i] != ' ' && input[i] != '\t') //  find second operand start
+          sec_opr = TRUE;
+
+        else if(sec_opr && (input[i] == ' ' || input[i] == '\t'))  //  find second operand end
           *oe = i - 1;
       }
 
