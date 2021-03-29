@@ -52,6 +52,7 @@ int find_format(char* mnemonic) {
 
   for(; cur; cur = cur->link) {
     if(!strcmp(cur->mnemonic, mnemonic)) {
+
       if(!strcmp(cur->format, "1")) //  1형식
         return 1;
       else if(!strcmp(cur->format, "2")) // 2형식
@@ -71,7 +72,7 @@ void print_optable() {  //  형식에 맞게 optable을 출력
 
     printf("%d : ", i);
     while(cur) {
-      printf("[%s, %s]", cur->mnemonic, cur->opcode);
+      printf("[%s, %s, %s]", cur->mnemonic, cur->opcode, cur->format);
       if(cur->link) printf(" -> ");
       cur = cur->link;
     }
@@ -199,7 +200,13 @@ void make_optable() { //  opcode.txt 파일을 읽어서 hash-table인 optable �
       }
       format[i - fstart] = input[i];
     }
-    
+   
+    for(i = 0; ; i++) {
+      if(!(('1' <= format[i] && format[i] <= '4') || format[i] == '/')) {
+        format[i] = '\0';
+        break;
+      }
+    }
     push_node(opcode, mnemonic, format);  //  opcode와 mnemonic 저장 후 optable에 삽입
   }
 
