@@ -5,6 +5,7 @@
 #include "assemble.h"
 
 int address = 0;
+int assembled;  //  assemble 명령 성공 시 TRUE, 실패 시 FALSE
 
 void clear_input_buffer() {
   while(getchar() != '\n');
@@ -833,6 +834,8 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     int error_flag = FALSE, i;
     char extension[5] = {0};
 
+    assembled = FALSE;
+
     if(!check_assemble_or_type(input, opt_start, filename)) 
       error_flag = TRUE; 
 
@@ -862,14 +865,19 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
 
     if(!error_flag) {
 
-      if(!pass_1(filename, lst_filename, fp, &fp_lst)) {
-        remove(lst_filename);
+      if(!pass_1(filename, lst_filename, fp, &fp_lst)) {  //  pass 1 과정에서 error 발생
+        remove(lst_filename); //  listing file 제거
+        fclose(fp_lst);
         return TRUE;
       }
 
       //
       printf("assemble 명령어는 구현 예정\n");
+      assembled = TRUE;
       //
+
+      fclose(fp_lst);
+
       sprintf(queue_input, "%s %s", cmd, filename);
       enqueue(queue_input);
     }

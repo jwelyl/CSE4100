@@ -3,12 +3,16 @@
 #include "optable.h"
 #include "symtable.h"
 
-int line = 0;
-int LOCCTR = 0;
+int line = 0;             //  listing file에 입력할 줄 번호(5부터 5씩 증가)
+int start_address = 0;    //  starting address
+int LOCCTR = 0;           //  Location Counter
+int program_size = 0;     //  Program Size = Location Counter - starting address
+
 char program_name[PROGRAM_NAME];
 char label[STRING_SIZE];
 char mnemonic[STRING_SIZE];
 char operand[STRING_SIZE];
+char locctr_array[LOCCTR_SIZE];
 
 int operand_to_dec() {  //  필요할 경우 10진수 배열을 10진수로 정수로 변환
   int i = strlen(operand) - 2;
@@ -16,6 +20,7 @@ int operand_to_dec() {  //  필요할 경우 10진수 배열을 10진수로 정�
   int ret = 0;
 
   for(; i >= 0; i--) {
+    if(operand[i] < '0' || operand[i] > '9') return NONE;
     ret += (operand[i] * mult);
     mult *= 10;
   }
@@ -24,6 +29,7 @@ int operand_to_dec() {  //  필요할 경우 10진수 배열을 10진수로 정�
 }
 
 int hex_to_dec(char* hex, int* dec) {  // 16진수를 10진수로 변경 
+  //  16진수를 10진수로 변환 성공 시 TRUE, 실패 시 FALSE 반환
   int i = strlen(hex) - 2;
   int mult = 1;
   
@@ -134,44 +140,113 @@ int process_input_string(char* input,
   else {  //  label 있는 줄일 경우
     for(i = 0; i < INPUT_LEN; i++) {
       if(input[i] == '\0') {
-        if(*ms != NONE && *me == NONE)  //  mnemonic만 있고 문자열이 끝날 경우
+        if(*ms != NONE && *me == NONE)  {//  mnemonic만 있고 문자열이 끝날 경우
           *me = i - 1;
-        else if(*os != NONE && *oe == NONE) //  operand까지 있고 문자열이 끝날 경우
-          *oe = i - 1;
+          printf("0me = %d\n", *me);
+        }
+
+        else if(*os != NONE && *oe == NONE) {  //  operand까지 있을 경우
+          if(comma && !sec_opr) { //  comma는 있는데 second operand를 못찾았을 경우
+            printf("Assembly source file error at line %d\n", line);
+            printf("second operand does not exist at line %d\n", line);
+            return FALSE;
+          }
+
+          else if(!comma || (comma && sec_opr)) {//  단일 operand거나, operand 두 개를 모두 찾았을 경우
+            *oe = i - 1;
+            printf("0oe = %d\n", *oe);
+          }
+        }
+
         break;
       } //  if-'\0' end
 
-      if(*ls == NONE && input[i] != ' ' && input[i] != '\t')  //  find label start
+      if(*ls == NONE && input[i] != ' ' && input[i] != '\t')  {//  find label start
         *ls = i;
+        //
+        printf("[ls = %d]\n", *ls);
+        //
+      }
       else if(*ls != NONE && *le == NONE) { //  finding label end
-        if(input[i] == ' ' || input[i] == '\t') //  find label end
+        if(input[i] == ' ' || input[i] == '\t') {//  find label end
           *le = i - 1;
+          //
+          printf("[le = %d]\n", *le);
+          //
+        }
       }
 
       else if(*le != NONE && *ms == NONE) { //  finding mnemonic start
-        if(input[i] != ' ' && input[i] != '\t') //  find mnemonic start
+        if(input[i] != ' ' && input[i] != '\t') {//  find mnemonic start
           *ms = i;
+          //
+          printf("[ms = %d]\n", *ms);
+          //
+        }
       }
 
       else if(*ms != NONE && *me == NONE) { //  finding mnemonic end
-        if(input[i] == ' ' || input[i] == '\t') //  find mnemonic end
+        if(input[i] == ' ' || input[i] == '\t') {//  find mnemonic end
           *me = i - 1;
+          //
+          printf("[me = %d]\n", *me);
+          //
+        }
       } 
 
       else if(*me != NONE && *os == NONE) { //  finding operand start
-        if(input[i] != ' ' && input[i] != '\t') //  find operand start
+        if(input[i] != ' ' && input[i] != '\t') {//  find operand start
           *os = i;
+          //
+          printf("[os = %d]\n", *os);
+          //
+        }
       }
 
-      else if(*os != NONE && *oe == NONE) { //  finding operand end
-        if(input[i] == ' ' || input[i] == '\t') //  find operand end
-          *oe = i;
+      else if(*os != NONE && *oe == NONE) {  //  operand end finding
+        if(!comma && (input[i] == ' ' || input[i] == '\t')) {//  find operand end without comma
+          *oe = i - 1;
+          printf("[oe = %d]\n", *oe);
+        }
+
+        else if(input[i] == ',') // find ','
+          comma = TRUE;
+
+        else if(comma && !sec_opr && (input[i] == ' ' || input[i] == '\t')) // continue to find second operand
+          continue;
+
+        else if(comma && !sec_opr && input[i] != ' ' && input[i] != '\t') //  find second operand start
+          sec_opr = TRUE;
+
+        else if(sec_opr && (input[i] == ' ' || input[i] == '\t')) {//  find second operand end
+          *oe = i - 1;
+          printf("[,oe = %d]\n", *oe);
+        }
       }
 
       else if(*oe != NONE) {
         if(input[i] != ' ' && input[i] != '\t') {
            printf("label 존재 o, input[%d] = %c(%d) ", i, input[i], input[i]);
           printf("Assembly source file error at line %d\n", line);
+
+          printf("input : %s\n", input);
+          printf("ls = %d, le = %d\nms = %d, me = %d\nos = %d, oe = %d\n", *ls, *le, *ms, *me, *os, *oe);
+
+        /*
+          printf("label : ");
+          for(int j = *ls; j <= *le; j++)
+            printf("%c", input[i]);
+          printf("\n"); 
+          printf("mnemonic : ");
+          for(int j = *ms; j <= *me; j++)
+            printf("%c", input[i]);
+          printf("\n"); 
+          printf("operand : ");
+          for(int j = *os; j <= *oe; j++)
+            printf("%c", input[i]);
+          printf("\n"); 
+        */
+
           return FALSE;
         }
       }
@@ -179,11 +254,11 @@ int process_input_string(char* input,
 
     for(i = *ls; i <= *le; i++)
       label[i - (*ls)] = input[i];
-    input[i - (*ls)] = '\0';
+    label[i - (*ls)] = '\0';
   
     for(i = *ms; i <= *me; i++)
       mnemonic[i - (*ms)] = input[i];
-    input[i - (*ms)] = '\0';
+    mnemonic[i - (*ms)] = '\0';
     
     if(*os != NONE && *oe != NONE) {  //  operand도 존재할 경우
       for(i = *os; i <= *oe; i++)
@@ -206,12 +281,36 @@ void change_extension(char* filename, char* target, char* extension) {
   strcat(target, extension);  
 }
 
+int get_bytes(char* operand) {  //  assembler directives인 BYTE의 operand bytes 계산 
+  //  오류 존재시 NONE 반환
+  int ret = 0, i;
+
+  if(strlen(operand) < 4) return NONE;
+
+  if(operand[0] == 'C' || operand[0] == 'X') {
+    if(operand[1] != '\'')
+      return NONE;
+    for(i = 2; i < strlen(operand); i++) {
+      if(operand[i] == '\'') break;
+      ret++;
+    }
+
+    if(operand[0] == 'X') {
+      if(ret % 2 == 1) return NONE;
+      else ret = ret / 2;
+    }
+  }
+  else return NONE;
+
+  return ret;
+}
+
 int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
   char input[INPUT_LEN];
   int ls = NONE, le = NONE; //  label start, end index
   int ms = NONE, me = NONE; //  opcode mnemonic start, end index
   int os = NONE, oe = NONE; //  operand start, end index 
-  int i;
+  int add; //  add : LOCCTR addition
 
   change_extension(filename, lst_filename, ".lst"); 
   //
@@ -224,53 +323,141 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
     return FALSE;
   }
 
-  /*
+  //  read first input line
   fgets(input, INPUT_LEN, fp_asm);
-  //
-  printf("first line : %s", input);
-  //
-  */
+  input[strlen(input) - 1] = '\0';  //  '\n'키 제거
 
+  if(!process_input_string(input, &ls, &le, &ms, &me, &os, &oe)) 
+      return FALSE;
+  line += 5;
+
+  if(!strcmp(mnemonic, "START")) {
+    if(!hex_to_dec(operand, &start_address)) {
+      printf("starting address error at line %d\n", line);
+      return FALSE;
+    }
+    LOCCTR = start_address;
+    dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);  //  LOCCTR을 출력하기 위해 16진수 배열로 변환
+    fprintf(*fp_lst, "%3d\t%s\t%s\n", line, locctr_array, input);
+    //
+    printf("%3d\t%s\t%s\n", line, locctr_array, input);
+    //
+  } //  if START
+  else LOCCTR = 0;
+  
+  reset_indices(&ls, &le, &ms, &me, &os, &oe);
+  //  reading from second line
   while(fgets(input, INPUT_LEN, fp_asm)) {
     input[strlen(input) - 1] = '\0';  //  '\n'키 제거
     line += 5;
-  /*  
-    if(input[0] == ' ' || input[0] == '\t')
-      printf("%d : %s는 LABEL 없음\n", line, input);
-    else
-      printf("%d : %s", line, input);
-  */
     if(!process_input_string(input, &ls, &le, &ms, &me, &os, &oe)) 
       return FALSE;
-//    printf("%3d\t%s\t%s\t%s\n", line, label, mnemonic, operand);
-    printf("%3d\t", line);
-    if(input[0] == '.')
-      printf("%s", input);
-
-    if(ls != NONE && le != NONE) {
-      for(i = ls; i <= le; i++)
-        printf("%c", label[i - ls]);
-      printf("\t");
-    }
-    else printf("\t");
     
-    if(ms != NONE && me != NONE) {
-      for(i = ms; i <= me; i++)
-        printf("%c", mnemonic[i - ms]);
-      printf("\t");
+    if(!strcmp(mnemonic, "END")) {  //  마지막 줄일 경우
+      break;
     }
-    else printf("\t");
-
-    if(os != NONE && oe != NONE) {
-      for(i = os; i <= oe; i++)
-        printf("%c", operand[i - os]);
-      printf("\t");
+    
+    if(input[0] == '.') { //  주석 또는 빈 줄일 경우
+      fprintf(*fp_lst, "%3d\t%s\n", line, input);
+      continue;
     }
-    else printf("\t");
-    printf("\n");
 
+    if(ls != NONE && le != NONE) {  //  label이 존재하는 줄일 경우
+      if(find_label(label)) { //  이미 존재하는 label이 다시 등장할 경우
+        printf("Duplicated Label at line %d.\n", line);
+        return FALSE;
+      }
+
+      else //  label이 처음 등장할 경우
+        push_stnode(label, LOCCTR); //  symtable에 label과 LOCCTR 함께 삽입 
+    } //  label end
+    
+   int f;
+   printf("before find mnemonic %s in line %d\n", mnemonic, line);
+
+   if((f = find_format(mnemonic)) != NONE) {  //  mnemonic이 assembler directives가 아닐 경우
+      if(f == 1)  //  1형식일 경우
+        add = 1;
+      else if(f == 2) //  2형식일 경우
+        add = 2;
+      else {  //  3/4 형식일 경우
+        printf("[%s]\n", mnemonic);
+        if(mnemonic[0] == '+') {// 4형식일 경우
+          add = 4;
+        } else {
+          add = 3;
+        }
+      }
+   }
+
+   else { //  mnemonic이 assembler directives일 경우
+     int bytes;
+
+     if(!strcmp(mnemonic, "WORD"))  //  "WORD"일 경우(for SIC machine)
+        add = 3;
+     else if(!strcmp(mnemonic, "BYTE")) { // "BYTE"일 경우
+        if(!(os != NONE && oe != NONE)) {
+          printf("operand of BYTE directive does not exist at line %d.\n", line);
+          return FALSE;
+        }
+        else if((bytes = get_bytes(operand)) == NONE) {
+          printf("operand of BYTE directive is invalid at line %d.\n", line);
+          return FALSE;
+        }
+        add = bytes;
+     }
+     else if(!strcmp(mnemonic, "RESB")) { //  "RESB"일 경우
+        if(!(os != NONE && oe != NONE)) {
+          printf("operand of RESB directive does not exist at line %d.\n", line);
+          return FALSE;
+        }
+
+       if((bytes = operand_to_dec()) == NONE) {
+          printf("operand of RESB directive is invalid at line %d.\n", line);
+          printf("os = %d\noe = %d\n", os, oe);
+          
+          return FALSE;
+       } 
+       add = bytes;
+     }
+
+     else if(!strcmp(mnemonic, "RESW")) { //  "RESW"일 경우
+        if(!(os != NONE && oe != NONE)) {
+          printf("operand of RESW directive does not exist at line %d.\n", line);
+          return FALSE;
+        }
+        add = 3;
+     }
+
+     else { //  "BASE"
+        fprintf(*fp_lst, "%3d%s\n", line, input);
+        //
+        printf("%3d%s\n", line, input);
+        //
+        
+        continue;
+     } 
+   }
+    dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);  //  LOCCTR을 출력하기 위해 16진수 배열로 변환
+    fprintf(*fp_lst, "%3d\t%s\t%s\n", line, locctr_array, input);
+    
+   // 
+    printf("%3d\t%s\t%s\n", line, locctr_array, input);
+    //
+    
     reset_indices(&ls, &le, &ms, &me, &os, &oe);
-  }
+    LOCCTR += add;
+  } //  while-end
+
+  //  process last line
+  dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);
+  fprintf(*fp_lst, "%3d\t%s\t%s\n", line, locctr_array, input);
+  
+  //
+  printf("%3d\t%s\t%s\n", line, locctr_array, input);
+  //
+  
+  program_size = LOCCTR - start_address;
 
   return TRUE;
 }

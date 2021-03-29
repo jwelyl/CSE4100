@@ -2,18 +2,19 @@
 
 HashNode* head[OPTABLE_SIZE]; //  linked-list의 가장 앞의 원소를 가리키는 포인터 저장 배열
 HashNode* tail[OPTABLE_SIZE]; //  linked-list의 가장 뒤의 원소를 가리키는 포인터 저장 배열
-HashNode* allocHN(char* opcode, char* mnemonic) { //  hash table에 삽입할 노드를 할당
+HashNode* allocHN(char* opcode, char* mnemonic, char* format) { //  hash table에 삽입할 노드를 할당
   HashNode* node = (HashNode*)malloc(sizeof(HashNode)); 
   strcpy(node->opcode, opcode); //  노드에 opcode 복사
   strcpy(node->mnemonic, mnemonic); //  노드에 mnemonic 복사
+  strcpy(node->format, format); //  노드에 format 복사
   node->link = NULL;
 
   return node;
 }
 
-void push_node(char* opcode, char* mnemonic) {  //  hash table에 노드 삽입
+void push_node(char* opcode, char* mnemonic, char* format) {  //  hash table에 노드 삽입
   int idx = hash_function(mnemonic);  //  hash table의 index 찾기
-  HashNode* node = allocHN(opcode, mnemonic);
+  HashNode* node = allocHN(opcode, mnemonic, format);
 
   if(idx == NONE) { //  삽입할 index 없음
     free(node); //  할당한 노드 해제
@@ -41,6 +42,26 @@ int find_opcode(char* mnemonic, char* opcode) { //  해당 mnemonic을 찾을 �
   }
   
   return FALSE;
+}
+
+int find_format(char* mnemonic) {
+  int idx = hash_function(mnemonic);
+  if(idx == NONE) return NONE;  //  탐색 실패
+
+  HashNode* cur = head[idx];
+
+  for(; cur; cur = cur->link) {
+    if(!strcmp(cur->mnemonic, mnemonic)) {
+      if(!strcmp(cur->format, "1")) //  1형식
+        return 1;
+      else if(!strcmp(cur->format, "2")) // 2형식
+        return 2;
+      else if(!strcmp(cur->format, "3/4"))  //  3/4형식
+        return 3;
+    }
+  }
+
+  return NONE;
 }
 
 void print_optable() {  //  형식에 맞게 optable을 출력
@@ -134,8 +155,11 @@ void make_optable() { //  opcode.txt 파일을 읽어서 hash-table인 optable �
   char input[OPCODE_INPUT]; //  파일에서 한 줄씩 읽기 위한 배열
   char opcode[OPCODE];  //  opcode 저장용 배열
   char mnemonic[MNEMONIC];  //  mnemonic 저장용 배열
+  char format[FORMAT];  //  format 저장용 배열
 
-  int i, start;
+  int i;
+  int  mstart, mend;  //  mnemonic start, end
+  int fstart;   //  format start
   
   opcode[OPCODE - 1] = '\0';
   mnemonic[MNEMONIC - 1] = '\0';
@@ -147,20 +171,36 @@ void make_optable() { //  opcode.txt 파일을 읽어서 hash-table인 optable �
       opcode[i] = input[i]; //  opcode 저장
     for(i = 2; ; i++) {
       if(input[i] != ' ' && input[i] != '\t') {
-        start = i;
+        mstart = i;
         break;
       }
     }
 
-    for(i = start; ; i++) {
+    for(i = mstart; ; i++) {
       if(input[i] == ' ' || input[i] == '\t') {
-        mnemonic[i - start] = '\0';
+        mnemonic[i - mstart] = '\0';
+        mend = i - 1;
         break;
       }
-      mnemonic[i - start] = input[i]; //  mnemonic 저장
+      mnemonic[i - mstart] = input[i]; //  mnemonic 저장
+    }
+
+    for(i = mend + 1; ; i++) {
+      if(input[i] != ' ' && input[i] != '\t') {
+        fstart = i;
+        break;
+      }
+    }
+
+    for(i = fstart; ; i++) {
+      if(input[i] == ' ' || input[i] == '\t') {
+        format[i - fstart] = '\0';
+        break;
+      }
+      format[i - fstart] = input[i];
     }
     
-    push_node(opcode, mnemonic);  //  opcode와 mnemonic 저장 후 optable에 삽입
+    push_node(opcode, mnemonic, format);  //  opcode와 mnemonic 저장 후 optable에 삽입
   }
 
   fclose(fp);

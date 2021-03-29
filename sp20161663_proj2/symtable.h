@@ -12,6 +12,7 @@ typedef struct symtabNode {
 
 SymTabNode* allocSTN(char* label, int locctr);
 int push_stnode(char* label, int locctr);
+int find_label(char* label);
 int find_locctr(char* label, int* locctr);
 void print_symtable();
 void delete_symtable();

@@ -24,6 +24,9 @@
 #define OPCODE_INPUT      30
 #define OPTABLE_SIZE      20
 
+/* format 저장 추가 */
+#define FORMAT             4
+
 /* dump 명령어에 사용할 배열 크기 */
 #define ADDRESS_COL        6
 #define HEX_COL            3
