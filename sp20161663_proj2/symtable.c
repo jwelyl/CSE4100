@@ -3,6 +3,7 @@
 
 SymTabNode* st_head[SYMTAB_SIZE];
 SymTabNode* lastest_symtable[INPUT_LEN];
+int st_num = 0; //  symtable에 삽입된 label 개수
 
 SymTabNode* allocSTN(char* label, int locctr) {
   SymTabNode* node = (SymTabNode*)malloc(sizeof(SymTabNode));
@@ -31,20 +32,25 @@ int push_stnode(char* label, int locctr) {
   else {
     for(; cur; ) {
       if(strcasecmp(label, cur->label) < 0) { 
-        if(cur == st_head[idx]) //  삽입되는 위치가 가장 앞일 경우 
-          st_head[idx] = cur;
+        if(cur == st_head[idx]) {//  삽입되는 위치가 가장 앞일 경우 
+          node->next = cur;
+          cur->prev = node;
+          st_head[idx] = node;
+        }
         else {                  //  중간에 삽입될 경우
           node->prev = cur->prev;
           cur->prev->next = node;
+          node->next = cur;
+          cur->prev = node;
         }
-        node->next = cur;
-        cur->prev = node;
+
         return TRUE;
       }
 
       if(cur->next == NULL) { //  삽입되는 위치가 가장 마지막일 경우
         cur->next = node;
         node->prev = cur;
+
         return TRUE;
       }
 
@@ -96,13 +102,13 @@ void print_symtable() {
   char locctr_col[LOCCTR_SIZE];
   int i;
 
-  printf("symbol\n");
   for(i = 0; i < SYMTAB_SIZE; i++) {
     SymTabNode* cur = st_head[i];
     
     while(cur) {
       dec_to_hex(cur->locctr, locctr_col, LOCCTR_SIZE);
       printf("\t%s\t%s\n", cur->label, locctr_col);
+      cur = cur->next;
     }
   }
 }

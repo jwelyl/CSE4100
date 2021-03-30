@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "queue.h"
 #include "optable.h"
+#include "symtable.h"
 #include "assemble.h"
 
 int address = 0;
@@ -766,6 +767,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     }
 
     //
+    print_symtable();
     printf("symbol 명령어는 구현 예정\n");
     //
     enqueue(cmd);
