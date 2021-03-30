@@ -328,7 +328,7 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
     }
     
     if(input[0] == '.') { //  주석 또는 빈 줄일 경우
-      fprintf(*fp_lst, "%3d\t\t\t\t%s\n", line, input);
+      fprintf(*fp_lst, "%3d\t\t%s\n", line, input);
       continue;
     }
 
@@ -388,8 +388,6 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
 
        if((bytes = operand_to_dec()) == NONE) {
           printf("operand of RESB directive is invalid at line %d.\n", line);
-          printf("os = %d\noe = %d\n", os, oe);
-          
           return FALSE;
        }
        add = bytes;
@@ -404,7 +402,7 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
      }
 
      else { //  "BASE"
-        fprintf(*fp_lst, "%3d\t%s\n", line, input);
+        fprintf(*fp_lst, "%3d\t %s\n", line, input);
         continue;
      } 
    }
@@ -417,7 +415,7 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
 
   //  process last line
   dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);
-  fprintf(*fp_lst, "%3d\t\t\t\t%s\n", line, input);
+  fprintf(*fp_lst, "%3d\t\t%s\n", line, input);
   
   program_size = LOCCTR - start_address;
 
