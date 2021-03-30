@@ -45,6 +45,16 @@
 /* LOCCTR 크기 */
 #define LOCCTR_SIZE        5
 
+/* Header, Text, Modification, End record */
+#define HEADER             20
+#define TEXT               70
+#define MODIFICATION       10
+#define END                8
+
+/* object code */
+#define OBJ_BIN            33 //  2진수일때 최대 길이(4형식)
+#define OBJ_HEX            9  //  16진수일때 ''
+
 /* register mnemonic */
 #define A                  0
 #define X                  1

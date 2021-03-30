@@ -57,7 +57,8 @@ void reset_indices(int* ls, int* le, int* ms, int* me, int* os, int* oe) {
   *le = NONE; *me = NONE; *oe = NONE;
 }
 
-int process_input_string(char* input,
+//  pass1을 위한 입력 문자열 처리
+int process_input_string1(char* input,
   int* ls, int* le, int* ms, int* me, int* os, int* oe) {
   //  assembly source file을 한 줄씩 읽어서 label, opcode_mnemonic, operand를 분리
   //  정상 처리되면 TRUE, 에러 발생시 FALSE 반환함
@@ -240,7 +241,13 @@ int process_input_string(char* input,
     return TRUE;
   } //  label 없는 줄 end
 
-  printf("Something was wrong in process_input_string function\n");
+  printf("Something was wrong in process_input_string1 function\n");
+  return FALSE;
+}
+
+//  pass2를 위한 입력 문자열 처리
+int process_input_string2(char* input,
+  int* ls, int* le, int* ms, int* me, int* os, int* oe) {
   return FALSE;
 }
 
@@ -257,7 +264,7 @@ int get_bytes(char* operand) {  //  assembler directives인 BYTE의 operand byte
   int ret = 0, i;
 
   if(strlen(operand) < 4) return NONE;
-
+/*
   if(operand[0] == 'C' || operand[0] == 'X') {
     if(operand[1] != '\'')
       return NONE;
@@ -271,12 +278,34 @@ int get_bytes(char* operand) {  //  assembler directives인 BYTE의 operand byte
       else ret = ret / 2;
     }
   }
+*/
+   if(operand[1] != '\'')
+      return NONE;
+
+  if(operand[0] == 'C') {
+    for(i = 2; i < strlen(operand); i++) {
+      if(operand[i] == '\'') break;
+      ret++;
+    }
+  }
+
+  else if(operand[0] == 'X') {
+    for(i = 2; i < strlen(operand); i++) {
+      if(operand[i] == '\'') break;
+      if(!(('0' <= operand[i] && operand[i] <= '9') || ('A' <= operand[i] && operand[i] <= 'F')))
+        return NONE;  //  16진수가 아닐 경우
+      ret++;
+    } 
+    if(ret % 2 == 1) return NONE;
+    else ret = ret / 2;
+  }
+
   else return NONE;
 
   return ret;
 }
 
-int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
+int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   char input[INPUT_LEN];
   char mnemonic4[STRING_SIZE] = {0, };  //  mnemonic이 4형식일 경우 대신 사용
   int ls = NONE, le = NONE; //  label start, end index
@@ -285,14 +314,11 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
   int add; //  add : LOCCTR addition
   int i, f;   //  looping index, format
 
-  change_extension(filename, lst_filename, ".lst"); 
-  //
-  printf("listing file name : %s\n", lst_filename);
-  //
+  printf("intermediate file name : %s\n", mid_filename);
 
-  *fp_lst = fopen(lst_filename, "w");
-  if(!(*fp_lst)) {
-    printf("listing file open error!\n");
+  *fp_mid = fopen(mid_filename, "w");
+  if(!(*fp_mid)) {
+    printf("intermediate file open error!\n");
     return FALSE;
   }
 
@@ -300,7 +326,7 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
   fgets(input, INPUT_LEN, fp_asm);
   input[strlen(input) - 1] = '\0';  //  '\n'키 제거
 
-  if(!process_input_string(input, &ls, &le, &ms, &me, &os, &oe)) 
+  if(!process_input_string1(input, &ls, &le, &ms, &me, &os, &oe)) 
       return FALSE;
   line += 5;
 
@@ -310,17 +336,21 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
       return FALSE;
     }
     LOCCTR = start_address;
-    dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);  //  LOCCTR을 출력하기 위해 16진수 배열로 변환
-    fprintf(*fp_lst, "%3d\t%s\t%s\n", line, locctr_array, input);
   } //  if START
-  else LOCCTR = 0;
-  
+  else 
+    LOCCTR = 0;
+
+  dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);  //  LOCCTR을 출력하기 위해 16진수 배열로 변환
+  fprintf(*fp_mid, "%3d\t%s\t%s\n", line, locctr_array, input);
+
+  strcpy(program_name, label);
+
   //  reading from second line
   while(fgets(input, INPUT_LEN, fp_asm)) {
     input[strlen(input) - 1] = '\0';  //  '\n'키 제거
     line += 5;
 
-    if(!process_input_string(input, &ls, &le, &ms, &me, &os, &oe)) 
+    if(!process_input_string1(input, &ls, &le, &ms, &me, &os, &oe)) 
       return FALSE;
 
     if(!strcmp(mnemonic, "END")) {  //  마지막 줄일 경우
@@ -328,7 +358,7 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
     }
     
     if(input[0] == '.') { //  주석 또는 빈 줄일 경우
-      fprintf(*fp_lst, "%3d\t\t%s\n", line, input);
+      fprintf(*fp_mid, "%3d\t\t%s\n", line, input);
       continue;
     }
 
@@ -402,12 +432,12 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
      }
 
      else { //  "BASE"
-        fprintf(*fp_lst, "%3d\t %s\n", line, input);
+        fprintf(*fp_mid, "%3d\t %s\n", line, input);
         continue;
      } 
    }
     dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);  //  LOCCTR을 출력하기 위해 16진수 배열로 변환
-    fprintf(*fp_lst, "%3d\t%s\t%s\n", line, locctr_array, input);
+    fprintf(*fp_mid, "%3d\t%s\t%s\n", line, locctr_array, input);
     
     //reset_indices(&ls, &le, &ms, &me, &os, &oe);
     LOCCTR += add;
@@ -415,10 +445,28 @@ int pass_1(char* filename, char* lst_filename, FILE* fp_asm, FILE** fp_lst) {
 
   //  process last line
   dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);
-  fprintf(*fp_lst, "%3d\t\t%s\n", line, input);
+  fprintf(*fp_mid, "%3d\t\t%s\n", line, input);
   
   program_size = LOCCTR - start_address;
 
+  printf("program name : %s\nprogram_size : %X\n", program_name, program_size);
+
   line = 0;
   return TRUE;
+}
+
+int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_filename, 
+           FILE* fp_asm, FILE** fp_mid, FILE** fp_lst, FILE** fp_obj) {
+  char h_record[HEADER] = {0, };
+  char t_record[TEXT] = {0, };
+  char m_record[MODIFICATION] = {0, };
+  
+  char obj_bin[OBJ_BIN] = {0, };
+  //  0 ~ 5 : opcode
+  //  6 : n, 7 : i, 8 : x, 9 : b, 10 : p, 11 : e
+  //  12 ~ 23 : disp(Format-3), 12 ~ 31(Format-4)
+  char obj_hex[OBJ_HEX] = {0, };
+
+  
+  return FALSE;
 }
