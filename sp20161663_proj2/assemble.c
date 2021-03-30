@@ -57,28 +57,45 @@ void reset_indices(int* ls, int* le, int* ms, int* me, int* os, int* oe) {
   *le = NONE; *me = NONE; *oe = NONE;
 }
 
-//  pass1을 위한 입력 문자열 처리
-int process_input_string1(char* input,
+//  pass 1,2를 위한 입력 문자열 처리
+int process_input_string(char* input, int pass,
   int* ls, int* le, int* ms, int* me, int* os, int* oe) {
   //  assembly source file을 한 줄씩 읽어서 label, opcode_mnemonic, operand를 분리
+  //  매개변수 pass가 1일 경우, pass_1에 대한 입력 문자열 처리
+  //  매개변수 pass가 2일 경우, pass_2에 대한 입력 문자열 처리
   //  정상 처리되면 TRUE, 에러 발생시 FALSE 반환함
   int comma = FALSE;    //  operand가 두 개일경우 구분
   int sec_opr = FALSE;  //  second operand  
   int i;
+  int start = 0;
 
   reset_indices(ls, le, ms, me, os, oe);
 
-  if(input[0] == '.') // 해당 줄은 주석 또는 빈 줄이므로 더 처리할 게 없음
-    return TRUE;
-  else if(input[0] == ' ' || input[0] == '\t') {  //  label이 없는 줄일 경우
-    for(i = 0; i < INPUT_LEN; i++) {
+  if(pass == 1) {
+    start = 0;
+    if(input[0] == '.') // pass1 과정에서 해당 줄은 주석 또는 빈 줄이므로 더 처리할 게 없음
+      return TRUE;
+  }
+  else if(pass == 2) {
+    start = 5;
+    if(input[0] == ' ' || input[0] == '\t' || input[0] == '.') // pass2 과정에서 해당 줄은 주석 또는 빈 줄이므로 더 처리할 게 없음
+      for(i = 0; i < INPUT_LEN; i++)  //  해당 줄이 정말 주석인지 검사     
+        if(input[i] == '.') return TRUE;
+  }
+  else {
+    printf("잘못된 pass = %d 입력\n", pass);
+    return FALSE;
+  }
+
+  if(input[start] == ' ' || input[start] == '\t') {  //  label이 없는 줄일 경우
+    for(i = start; i < INPUT_LEN; i++) {
       if(input[i] == '\0') {
         if(*ms != NONE && *me == NONE)  {//  mnemonic만 있고 문자열이 끝날 경우
           *me = i - 1;
         }
         else if(*os != NONE && *oe == NONE) {  //  operand까지 있을 경우
           if(comma && !sec_opr) { //  comma는 있는데 second operand를 못찾았을 경우
-            printf("Assembly source file error at line %d\n", line);
+            printf("Assembly source file error at line %d during pass %d\n", line, pass);
             return FALSE;
           }
 
@@ -128,7 +145,7 @@ int process_input_string1(char* input,
       else if(*oe != NONE) {
         if(input[i] != ' ' && input[i] != '\t') {
           printf("label 존재 x, input[%d] = %c(%d) ", i, input[i], input[i]);
-          printf("Assembly source file error at line %d\n", line);
+          printf("Assembly source file error at line %d during pass %d\n", line, pass);
           return FALSE;
         }
       }
@@ -148,7 +165,7 @@ int process_input_string1(char* input,
   } //  label 없는 줄 end
 
   else {  //  label 있는 줄일 경우
-    for(i = 0; i < INPUT_LEN; i++) {
+    for(i = start; i < INPUT_LEN; i++) {
       if(input[i] == '\0') {
         if(*ms != NONE && *me == NONE)  {//  mnemonic만 있고 문자열이 끝날 경우
           *me = i - 1;
@@ -156,7 +173,7 @@ int process_input_string1(char* input,
 
         else if(*os != NONE && *oe == NONE) {  //  operand까지 있을 경우
           if(comma && !sec_opr) { //  comma는 있는데 second operand를 못찾았을 경우
-            printf("Assembly source file error at line %d\n", line);
+            printf("Assembly source file error at line %d during pass %d\n", line, pass);
             printf("second operand does not exist at line %d\n", line);
             return FALSE;
           }
@@ -218,7 +235,7 @@ int process_input_string1(char* input,
       else if(*oe != NONE) {
         if(input[i] != ' ' && input[i] != '\t') {
           printf("label 존재 o, input[%d] = %c(%d) ", i, input[i], input[i]);
-          printf("Assembly source file error at line %d\n", line);
+          printf("Assembly source file error at line %d during pass %d\n", line, pass);
           return FALSE;
         }
       }
@@ -241,15 +258,7 @@ int process_input_string1(char* input,
     return TRUE;
   } //  label 없는 줄 end
 
-  printf("Something was wrong in process_input_string1 function\n");
-  return FALSE;
-}
-
-//  pass2를 위한 입력 문자열 처리
-int process_input_string2(char* input,
-  int* ls, int* le, int* ms, int* me, int* os, int* oe) {
-
-
+  printf("Something was wrong in process_input_string function\n");
   return FALSE;
 }
 
@@ -328,7 +337,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   fgets(input, INPUT_LEN, fp_asm);
   input[strlen(input) - 1] = '\0';  //  '\n'키 제거
 
-  if(!process_input_string1(input, &ls, &le, &ms, &me, &os, &oe)) 
+  if(!process_input_string(input, 1, &ls, &le, &ms, &me, &os, &oe)) 
       return FALSE;
   line += 5;
 
@@ -343,7 +352,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
     LOCCTR = 0;
 
   dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);  //  LOCCTR을 출력하기 위해 16진수 배열로 변환
-  fprintf(*fp_mid, "%3d\t%s\t%s\n", line, locctr_array, input);
+  fprintf(*fp_mid, "%s\t%s\n", locctr_array, input);
 
   strcpy(program_name, label);
 
@@ -352,7 +361,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
     input[strlen(input) - 1] = '\0';  //  '\n'키 제거
     line += 5;
 
-    if(!process_input_string1(input, &ls, &le, &ms, &me, &os, &oe)) 
+    if(!process_input_string(input, 1, &ls, &le, &ms, &me, &os, &oe)) 
       return FALSE;
 
     if(!strcmp(mnemonic, "END")) {  //  마지막 줄일 경우
@@ -360,7 +369,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
     }
     
     if(input[0] == '.') { //  주석 또는 빈 줄일 경우
-      fprintf(*fp_mid, "%3d\t\t%s\n", line, input);
+      fprintf(*fp_mid, "\t%s\n", input);
       continue;
     }
 
@@ -434,12 +443,12 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
      }
 
      else { //  "BASE"
-        fprintf(*fp_mid, "%3d\t %s\n", line, input);
+        fprintf(*fp_mid, "\t%s\n", input);
         continue;
      } 
    }
     dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);  //  LOCCTR을 출력하기 위해 16진수 배열로 변환
-    fprintf(*fp_mid, "%3d\t%s\t%s\n", line, locctr_array, input);
+    fprintf(*fp_mid, "%s\t%s\n", locctr_array, input);
     
     //reset_indices(&ls, &le, &ms, &me, &os, &oe);
     LOCCTR += add;
@@ -447,28 +456,68 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
 
   //  process last line
   dec_to_hex(LOCCTR, locctr_array, LOCCTR_SIZE);
-  fprintf(*fp_mid, "%3d\t\t%s\n", line, input);
+  fprintf(*fp_mid, "\t%s\n", input);
   
   program_size = LOCCTR - start_address;
 
   printf("program name : %s\nprogram_size : %X\n", program_name, program_size);
 
   line = 0;
+  fclose(fp_asm);
   return TRUE;
 }
 
 int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_filename, 
-           FILE* fp_asm, FILE** fp_mid, FILE** fp_lst, FILE** fp_obj) {
+          FILE** fp_mid, FILE** fp_lst, FILE** fp_obj) {
+  char input[INPUT_LEN];
+  char mnemonic4[STRING_SIZE] = {0, };
+  int ls = NONE, le = NONE;
+  int ms = NONE, me = NONE;
+  int os = NONE, oe = NONE;
+  int add;
+  int i, f;
+  //  여기까지는 pass_1과 같음
+  //  아래는 pass_2에 추가된 변수
   char h_record[HEADER] = {0, };
   char t_record[TEXT] = {0, };
   char m_record[MODIFICATION] = {0, };
   
-  char obj_bin[OBJ_BIN] = {0, };
+  char obj_bin[OBJ_BIN] = {0, };  //  object code를 2진수로 작성
   //  0 ~ 5 : opcode
   //  6 : n, 7 : i, 8 : x, 9 : b, 10 : p, 11 : e
   //  12 ~ 23 : disp(Format-3), 12 ~ 31(Format-4)
-  char obj_hex[OBJ_HEX] = {0, };
+  char obj_hex[OBJ_HEX] = {0, };  //  2진수 object code를 16진수로 변환
 
+  *fp_mid = fopen(mid_filename, "r");
+  if(!(*fp_mid)) {
+    printf("intermediate file open error!\n");
+    return FALSE;
+  }
+
+  change_extension(filename, lst_filename, ".lst");
+  change_extension(filename, obj_filename, ".obj");
+  *fp_lst = fopen(lst_filename, "w");
+  *fp_obj = fopen(obj_filename, "w");
+
+  while(fgets(input, INPUT_LEN, *fp_mid)) {
+    input[strlen(input) - 1] = '\0';
+
+    if(!process_input_string(input, 2, &ls, &le, &ms, &me, &os, &oe)) 
+      return FALSE;
+
+    if(ls != NONE && le != NONE) 
+      printf("label : %s\t", label);
+    else printf("\t");
+
+    if(ms != NONE && me != NONE)
+      printf("mnemonic : %s\t", mnemonic);
+    else printf("\t");
+
+    if(os != NONE && oe != NONE)
+      printf("operand : %s\t\n", operand);
+    else printf("\t\n");
+
+  }
   
-  return FALSE;
+  return TRUE;
 }
