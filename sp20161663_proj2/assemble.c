@@ -248,6 +248,8 @@ int process_input_string1(char* input,
 //  pass2를 위한 입력 문자열 처리
 int process_input_string2(char* input,
   int* ls, int* le, int* ms, int* me, int* os, int* oe) {
+
+
   return FALSE;
 }
 

@@ -7,7 +7,7 @@
 
 int address = 0;
 int assembled = FALSE;       //  assemble 명령이 한번이라도 성공한 적 있을 경우 TRUE, 없을 경우 FALSE
-int last_assembled = FALSE;  //  가장 마지막 assemble 명령 성공 시 TRUE, 실패 시 FALSE
+int latest_assembled = FALSE;  //  가장 마지막 assemble 명령 성공 시 TRUE, 실패 시 FALSE
 
 void clear_input_buffer() {
   while(getchar() != '\n');
@@ -673,6 +673,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     }
     delete_queue();
     delete_optable();
+    delete_latest_symtable();
     return FALSE;
   }
  
@@ -769,7 +770,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       return TRUE;
     }
 
-    if(!assembled) {  //  단 한번도 assemble 명령이 성공한 적이 없을 경우
+    if(!latest_assembled) {  //  단 한번도 assemble 명령이 성공한 적이 없을 경우
       printf("assemble 명령이 수행된 적이 없음\n");
       return TRUE;
     }
@@ -844,7 +845,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     int error_flag = FALSE, i;
     char extension[5] = {0};
 
-    last_assembled = FALSE;
+    assembled = FALSE;
 
     if(!check_assemble_or_type(input, opt_start, filename)) 
       error_flag = TRUE; 
@@ -876,18 +877,20 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     if(!error_flag) {
 
       if(!pass_1(filename, mid_filename, fp, &fp_mid)) {  //  pass 1 과정에서 error 발생
-        remove(mid_filename); //  listing file 제거
         fclose(fp_mid);
+        remove(mid_filename); //  listing file 제거
+        delete_symtable();    //  남은 symtable 제거
         return TRUE;
       }
 
       //
       printf("assemble 명령어는 구현 예정\n");
-      last_assembled = TRUE;  //  가장 최근의 assemble 명령 성공함
-      if(!assembled) {  //  최초로 assemble 명령이 성공할 경우
-        assembled = TRUE;
+      assembled = TRUE;  //  가장 최근의 assemble 명령 성공함
+      if(!latest_assembled) {  //  최초로 assemble 명령이 성공할 경우
+        latest_assembled = TRUE;
       }
-      //
+      //  assemble이 성공했으므로 latest_table을 갱신함
+      make_latest_symtable();
 
       fclose(fp_mid);
 

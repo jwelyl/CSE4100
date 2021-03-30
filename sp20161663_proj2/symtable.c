@@ -1,9 +1,12 @@
 #include "symtable.h"
 #include "memory.h"
 
-SymTabNode* st_head[SYMTAB_SIZE];
-SymTabNode* lastest_symtable[INPUT_LEN];
-int st_num = 0; //  symtable에 삽입된 label 개수
+SymTabNode* st_head[SYMTAB_SIZE]; //  assemble 과정에서 사용되는 hash table로 
+                                  //  assemble 후 해제됨
+SymTabNode* latest_symtable = NULL; //  가장 최근의 assemble 결과 label 저장
+
+int st_num = 0;         //  symtable에 삽입된 label 개수
+int latest_st_num = 0;  //  가장 최근에 assemble 후 생성된 symtable의 label 개수
 
 SymTabNode* allocSTN(char* label, int locctr) {
   SymTabNode* node = (SymTabNode*)malloc(sizeof(SymTabNode));
@@ -27,6 +30,7 @@ int push_stnode(char* label, int locctr) {
 
   if(!cur) {//  해당 인덱스에 처음 삽입하는 경우
     st_head[idx] = node;
+    st_num++;
     return TRUE;
   }
   else {
@@ -44,6 +48,7 @@ int push_stnode(char* label, int locctr) {
           cur->prev = node;
         }
 
+        st_num++;
         return TRUE;
       }
 
@@ -51,6 +56,7 @@ int push_stnode(char* label, int locctr) {
         cur->next = node;
         node->prev = cur;
 
+        st_num++;
         return TRUE;
       }
 
@@ -101,7 +107,7 @@ int find_locctr(char* label, int* locctr) { //  label의 LOCCTR 찾기
 void print_symtable() {
   char locctr_col[LOCCTR_SIZE];
   int i;
-
+/*
   for(i = 0; i < SYMTAB_SIZE; i++) {
     SymTabNode* cur = st_head[i];
     
@@ -110,6 +116,11 @@ void print_symtable() {
       printf("\t%s\t%s\n", cur->label, locctr_col);
       cur = cur->next;
     }
+  }
+*/
+  for(i = 0; i < latest_st_num; i++) {
+    dec_to_hex(latest_symtable[i].locctr, locctr_col, LOCCTR_SIZE);
+    printf("\t%s\t%s\n", latest_symtable[i].label, locctr_col);
   }
 }
 
@@ -141,4 +152,54 @@ int st_hash_function(char* label) {
     idx = NONE;
 
   return idx;
+}
+
+int make_latest_symtable() {
+  //  assemble 성공 시 assemble 과정에서 symtable에 저장된 label, locctr 내용을
+  //  동적할당한 배열에 저장한 후 symtable은 해제함
+  //  매번 assemble 성공 시 호출되어 기존의 동적할당한 배열을 해제 후 새로 생성 
+  int i, j = 0;
+        
+  latest_st_num = st_num;
+  st_num = 0;
+  printf("마지막 어셈블 시 라벨 개수 : %d\n", latest_st_num);
+
+  if(latest_st_num == 0) {
+    printf("Label 개수 0개\n");
+    return FALSE;
+  }
+
+  if(latest_symtable) { //  이전에 assemble이 성공하여 배열이 할당된 경우
+    //
+    printf("이전에 할당된 latest_symtable 해제\n");
+    //
+    free(latest_symtable);  //  동적할당 해제
+    latest_symtable = NULL;
+  }
+
+  latest_symtable = (SymTabNode*)malloc(sizeof(SymTabNode) * latest_st_num);
+
+  for(i = 0; i < SYMTAB_SIZE; i++) {
+    SymTabNode* cur = st_head[i];
+    
+    while(cur) {
+        strcpy(latest_symtable[j].label, cur->label);
+        latest_symtable[j].locctr = cur->locctr;
+        j++;
+        cur = cur->next;
+    }
+  }
+  printf("j = %d\n", j);
+  
+  //  복사 후 symtable 해제
+  delete_symtable();
+  return TRUE;
+}
+
+void delete_latest_symtable() {
+  //  프로그램이 종료될 때 호출되어 동적 할당된 배열을 해제한다.
+  if(latest_symtable) {
+    free(latest_symtable);
+    latest_symtable = NULL;
+  }
 }
