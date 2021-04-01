@@ -48,11 +48,17 @@ int hex_to_bin(char hex, char* bin) { //  0 ~ F 16진수를 4bits 2진수로 변
     return FALSE;
   }
 
-  for(i = 3; i >= 0; i++) {
-    bin[i] = dec % 2;
+  printf("dec = %d\n", dec);
+
+  for(i = 3; i >= 0; i--) {
+    if(dec % 2 == 0) bin[i] = '0';
+    else bin[i] = '1';
     dec = dec / 2;
   }
 
+  //
+  printf("변환된 이진수 : %s(%zu)\n", bin, strlen(bin));
+  //
   return TRUE;
 }
 
@@ -536,14 +542,17 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   char m_record[MODIFICATION] = {0, };
   char h_temp[7];  //  Header record 작성용 배열
 
+  char opcode[OPCODE] = {0, };  //  optable로부터 opcode를 받아옴
+  char hex_bits[5] = {0, };      //  0~F 사이의 16진수를 2진수 배열로 변환
   char obj_code[OBJ_HEX] = {0, }; //  lst, obj 파일에 실제 입력할 hex object code
   char obj_bin[13] = {0, };       //  opcode(0~5), n(6), i(7), x(8), b(9), p(10), e(11)
   //  opcode와 n, i, x, b, p, e 결정 후 obj_code의 앞의 3자리 16진수로 변환
   int* pos_to_mod = (int*)malloc(sizeof(int) * format_4);
   //  수정해야 할 4형식 명령어 object code 위치 저장할 배열
   int locctr; //  현재 줄의 LOCCTR
-  int pc;     //  현재 줄의 PROCESS COUNTER;
+  int pc;     //  현재 줄의 PROGRAM COUNTER;
   int base;   //  B 레지스터에 저장된 값
+  int disp;   //  object code 작성에 필요한 disp(3형식) 또는 address(4형식)
 
   *fp_mid = fopen(mid_filename, "r");
   if(!(*fp_mid)) {
@@ -602,6 +611,73 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
     if(input[0] == ' ' || input[0] == '\t' || input[0] == '.') { //  주석 또는 빈 줄인 경우
       fprintf(*fp_lst, "%3d\t%s\n", line, input);
       continue;
+    }
+
+    if(mnemonic[0] == '+') {  //  4형식일 경우
+      for(i = 1; i < strlen(mnemonic); i++)
+        mnemonic4[i - 1] = mnemonic[i];
+      mnemonic4[i - 1] = '\0';
+      f = find_format(mnemonic4);
+      find_opcode(mnemonic4, opcode);
+    }
+    else {  //  4형식이 아닐 경우
+      f = find_format(mnemonic);
+      find_opcode(mnemonic, opcode);
+    }
+
+    for(i = 0; i < 13; i++)
+      obj_bin[i] = '\0';  //  매 줄마다 obj_bin 초기화
+
+    if(f != NONE) { //  mnemonic이 assembler directive가 아닐 경우
+      if(f == 1) // 1형식일 경우
+        add = 1;
+      else if(f == 2) { //  2형식일 경우
+        add = 2;
+        //
+        printf("Register %s at line %d\n", operand, line); 
+        //
+      }
+      else {
+        if(mnemonic[0] == '+') { //  4형식일 경우
+          add = 4;
+          obj_bin[9] = '0';   //  b-bit 0
+          obj_bin[10] = '0';  //  p-bit 0
+          obj_bin[11] = '1';  //  e-bit 1
+        }
+        else {  //  3형식일 경우
+          add = 3;
+          obj_bin[11] = '0';  //  e-bit 0
+        }
+      }
+      pc = locctr + add;  //  PROGRAM COUNTER 결정
+  
+     // opcode 부분 2진수로 변환 
+      if(!hex_to_bin(opcode[0], hex_bits)) return FALSE;
+        strcat(obj_bin, hex_bits);
+      if(!hex_to_bin(opcode[1], hex_bits)) return FALSE;
+        strcat(obj_bin, hex_bits);
+
+      //
+      printf("%d번째 줄 opcode(%s) : %s\n", line, mnemonic, obj_bin);
+      //
+      if(f == 1); //  1형식일 경우 operand 없이 opcode만 존재
+      else if(f == 2) { //  2형식일 경우 opcode과 operand로 register 존재 
+      
+      }
+      else if(f == 3 || f == 4) {
+        if(operand[0] == '#') { //  immediate addressing
+          obj_bin[6] = '0'; //  n-bit 0
+          obj_bin[7] = '1'; //  i-bit 1
+        }
+        else if(operand[0] == '@') {  //  indirect addressing
+          obj_bin[6] = '1'; //  n-bit 1
+          obj_bin[7] = '0';
+        }
+      }
+       
+    } //  none assebler directive end
+    else {  //  mnemonic이 assembler directive일 경우
+    
     }
 
 
