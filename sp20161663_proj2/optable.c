@@ -72,7 +72,7 @@ void print_optable() {  //  형식에 맞게 optable을 출력
 
     printf("%d : ", i);
     while(cur) {
-      printf("[%s, %s, %s]", cur->mnemonic, cur->opcode, cur->format);
+      printf("[%s, %s]", cur->mnemonic, cur->opcode);
       if(cur->link) printf(" -> ");
       cur = cur->link;
     }

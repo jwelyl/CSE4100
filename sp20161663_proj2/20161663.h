@@ -52,7 +52,7 @@
 #define END                8
 
 /* object code */
-#define OBJ_BIN            33 //  2진수일때 최대 길이(4형식)
+//#define OBJ_BIN            33 //  2진수일때 최대 길이(4형식)
 #define OBJ_HEX            9  //  16진수일때 ''
 
 /* register mnemonic */

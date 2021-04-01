@@ -549,6 +549,7 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   int ls = NONE, le = NONE;
   int ms = NONE, me = NONE;
   int os = NONE, oe = NONE;
+  int add;
   int i, f;
   //  여기까지는 pass_1과 같음
   //  아래는 pass_2에 추가된 변수
@@ -560,13 +561,17 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   char opr1[STRING_SIZE] = {0, }, opr2[STRING_SIZE] = {0, };  //  operand 최대 2개 가능
   int os1, oe1, os2, oe2, comma;  //  각 operand의 시작, 끝 인덱스, comma 존재
   char opcode[OPCODE] = {0, };  //  optable로부터 opcode를 받아옴
+  char hex_bits[5] = {0, };      //  0~F 사이의 16진수를 2진수 배열로 변환
   char obj_code[OBJ_HEX] = {0, }; //  lst, obj 파일에 실제 입력할 hex object code
+//  char obj_bin[33] = {0, };       //  opcode(0~5), n(6), i(7), x(8), b(9), p(10), e(11)
+  //  opcode와 n, i, x, b, p, e 결정 후 obj_code의 앞의 3자리 16진수로 변환
   int* pos_to_mod = (int*)malloc(sizeof(int) * format_4);
   //  수정해야 할 4형식 명령어 object code 위치 저장할 배열
-  int locctr;         //  현재 줄의 LOCCTR
-  int pc;             //  현재 줄의 PROGRAM COUNTER;
-  int base = NONE;    //  B 레지스터에 저장된 값
-  int disp;           //  object code 작성에 필요한 disp(3형식) 또는 address(4형식)
+  int locctr; //  현재 줄의 LOCCTR
+  int pc;     //  현재 줄의 PROGRAM COUNTER;
+  int base;   //  B 레지스터에 저장된 값
+  int disp;   //  object code 작성에 필요한 disp(3형식) 또는 address(4형식)
+  char disp_arr[9] = {0, };  //  disp(3형식) 또는 address(4형식)
 
   *fp_mid = fopen(mid_filename, "r");
   if(!(*fp_mid)) {
@@ -611,7 +616,6 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   while(fgets(input, INPUT_LEN, *fp_mid)) {
     input[strlen(input) - 1] = '\0';  //  '\n' 키 제거
     line += 5;
-    memset(obj_code, 0, sizeof(obj_code));  //  obj_code 초기화
 
     if(!process_input_string(input, 2, &locctr, &ls, &le, &ms, &me, &os, &oe))
       return FALSE;
@@ -673,162 +677,145 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
       printf("분리된 opr1 = %s\n", opr1);
       printf("분리된 opr2 = %s\n", opr2);
       //
-    } //  operand 분리 end
+    }
 
     if(mnemonic[0] == '+') {  //  4형식일 경우
       for(i = 1; i < strlen(mnemonic); i++)
         mnemonic4[i - 1] = mnemonic[i];
       mnemonic4[i - 1] = '\0';
       f = find_format(mnemonic4);
-      if(f != 3) {  //  3, 4형식 opcode mnemonic이 아닐 경우
-        printf("Cannot be Format 4 in line %d\n", line);
-        return FALSE; 
-      }
-      f = 4;
       find_opcode(mnemonic4, opcode);
     }
     else {  //  4형식이 아닐 경우
       f = find_format(mnemonic);
       find_opcode(mnemonic, opcode);
     }
-    pc = locctr + f;  //  Program Counter
 
-    if(f != NONE) { //  mnemonic이 Assembler Directives가 아닐 경우
-      obj_code[0] = opcode[0];
-      
-      if(f == 1 || f == 2) {
+    obj_code[0] = opcode[0];
+
+    for(i = 0; i < 33; i++)
+      obj_bin[i] = '\0';  //  매 줄마다 obj_bin 초기화
+
+    if(f != NONE) { //  mnemonic이 assembler directive가 아닐 경우
+      if(f == 1) { // 1형식일 경우
         obj_code[1] = opcode[1];
-        
-        if(f == 2) {
-          int reg1 = find_register(opr1);
-          int reg2 = find_register(opr2);
-
-          if(reg1 == NONE) {
-            printf("Register error at line %d\n", line);
-            return FALSE;
-          }
-          if(reg2 == NONE) reg2 == 0;
-          obj_code[2] = reg1 + '0';
-          obj_code[3] = reg2 + '0';
-
-          printf("%d번째 줄 완성된 obj_code : %s\n", obj_code);
+        add = 1;
+      }
+      else if(f == 2) { //  2형식일 경우
+        obj_code[1] = opcode[1];
+        add = 2;
+        //
+        printf("Register %s at line %d\n", operand, line); 
+        //
+      }
+      else {
+        if(mnemonic[0] == '+') { //  4형식일 경우
+          add = 4;
+          obj_bin[9] = '0';   //  b-bit 0
+          obj_bin[10] = '0';  //  p-bit 0
+          obj_bin[11] = '1';  //  e-bit 1
         }
-      } //  format 1 or 2 end
+        else {  //  3형식일 경우
+          add = 3;
+          obj_bin[11] = '0';  //  e-bit 0
+        }
+      }
+      pc = locctr + add;  //  PROGRAM COUNTER 결정
+  
+     // opcode 부분 2진수로 변환 
+      if(!hex_to_bin(opcode[0], hex_bits)) return FALSE;
+        strcat(obj_bin, hex_bits);
+      if(!hex_to_bin(opcode[1], hex_bits)) return FALSE;
+        strcat(obj_bin, hex_bits);
 
+      //
+      printf("%d번째 줄 opcode(%s) : %s\n", line, mnemonic, obj_bin);
+      //
+      if(f == 1); //  1형식일 경우 operand 없이 opcode만 존재
+      else if(f == 2) { //  2형식일 경우 opcode과 operand로 register 존재 
+        int r1 = 0, r2 = 0;
+        r1 = find_register(opr1);
+        r2 = find_register(opr2);
+
+        if(r1 == NONE) {
+          printf("register error at line %d\n", line);
+          return FALSE;
+        }  
+        
+        if(!hex_to_bin(r1 + '0', hex_bits)) return FALSE;
+          strcat(obj_bin, hex_bits);
+
+         if(r2 != NONE) {
+          if(!hex_to_bin(r2 + '0', hex_bits)) return FALSE;
+          strcat(obj_bin, hex_bits);
+         } 
+         else {
+          r2 = 0;
+          if(!hex_to_bin(r2 + '0', hex_bits)) return FALSE;
+          strcat(obj_bin, hex_bits);
+         }
+
+         //
+        printf("%d에서 2형식일때 obj_bin : %s\n", line, obj_bin);
+        //
+      }
       else if(f == 3 || f == 4) {
-        int num = 0;
-       
-        if(os == NONE && oe == NONE) {  //  operand 없을 경우
-          //  n-bit : 1, i-bit: 1
-          num = 3;  //  11b
-        } 
-        else if(operand[0] == '#') { //  immediate addressing
-          // n-bit : 0, i-bit : 1
-          num = 1;  //  01b
+        if(operand[0] == '#') { //  immediate addressing
+          obj_bin[6] = '0'; //  n-bit 0
+          obj_bin[7] = '1'; //  i-bit 1
         }
         else if(operand[0] == '@') {  //  indirect addressing
-          //  n-bit : 1, i-bit : 0
-          num = 2;  //  10b
-        }
-        else {  //  simple addressing
-          //  n-bit : 1, i-bit : 1
-          num = 3;  //  11b
+          obj_bin[6] = '1'; //  n-bit 1
+          obj_bin[7] = '0';
         }
 
-        if(opcode[1] == '0' || opcode[1] == '4' || opcode[1] == '8')
-          num = (opcode[1] - '0') + num;
-        else if(opcode[1] == 'C')
-          num = (opcode[1] - 'A' + 10) + num
-        else {
-          printf("opcode error at line %d\n", line);
-        }
+        if(!strcmp(opr2, "X")) //  indexing
+          obj_bin[8] = '1';
+        else obj_bin[8] = '0';
 
-        if(0 <= num && num <= 9)
-          obj_code[1] = num + '0';
-        else if(10 <= num && num <= 15)
-          obj_code[1] = num - 10 + 'A';
+        if(f == 3) {
+          int ta; //  operand의 locctr
+          if(find_locctr(opr1, &ta)) {
+            printf("Invalid operand at line %d\n", line);
+            return FALSE;
+          }
 
-        num = 0;
-        if(!strcmp(opr2, "X")) {  //  index addressing
-          //  x-bit : 1 
-          num = 8;  //  1___b
-        }
-
-        int TA;
-        char hex_temp[9] = {0, }; //  int 32-bits, 8-half-bytes
-        
-        if(os != NONE && oe != NONE)
-          find_locctr(opr1, &TA);
-        else TA = 0;
-
-        if(f == 3) {  //  특히 format-3일 경우
-          if(os == NONE && oe == NONE)  //  operand가 없을 경우
-            disp = 0;
-          else if(-2048 <= (TA - pc) && (TA -pc) <= 2047) {
-            disp = TA - pc; //  PC-relative addressing
-            //  b-bit : 0, p-bit : 1, e-bit : 0
-            num += 2; //  __1_b 추가 
+          if(-2048 <= (ta - pc) && (ta - pc) <= 2047) {
+            disp = ta - pc;
+            obj_bin[9] = '0';
+            obj_bin[10] = '1';
           }
           else if(base == NONE) {
-            printf("Base-relativie addressing error at line %d\n", line);
+            printf("Invalid Base relative\n");
             return FALSE;
           }
-          else if(0 <= (TA - base) && (TA - base) <= 4095) {
-            disp = TA - base; //  Base-relative addressing
-            //  b-bit : 1, p-bit : 0, e-bit : 0
-            num += 4; //  _1__b 추가
+          else if(0 <= (ta - base) && (ta - base) <= 4095) {
+            disp = ta - base;
+            obj_bin[9] = '1';
+            obj_bin[10] = '0';
           }
-          else {  //  Format 3 error
-            printf("Invalid Format 3 error at line %d\n", line);
+          else {
+            printf("Need format 4 but format 3 error at line %d\n", line);
             return FALSE;
           }
-        }
-        else {  //  format-4일 경우
-          disp = TA;  //  direct-addressing
-          //  b-bit : 0, p-bit : 0, e-bit : 0
-          num += 1; //  ___1b 추가
-        }
-       
-        if(10 <= num && num <= 15)
-          obj_code[2] = num - 10 + 'A';
-        else if(0 <= num && num <= 9)
-          obj_code[2] = num + '0';
-        else {
-          printf("disp error at line %d\n", line);
-          return FALSE;
-        }
 
-        sprintf(hex_temp, "%X", disp);
-
-        int end;
-        if(f == 3) end = 5;
-        if(f == 4) end = 7;
-
-        if(disp < 0) {  //  3형식일 경우만 해당
-          if(f == 4) {
-            printf("Cannot be Format 4 at line %d\n", line);
-            return FALSE;
+          for(i = 0; i < 21; i++)
+            disp_arr[i] = 0;
+          if(disp < 0) {
+            int temp = disp * (-1);
           }
-          for(i = 7; i >= 5; i--)
-            obj_code[i - 2] = hex_temp[i];
-        }
-        else {
-          for(i = 3; i <= end; i++)
-            obj_code[i] = '0';
-          if(disp > 0) {
-            for(i = 0; i < strlen(hex_temp); i++) {
-              obj_code[end - strlen(hex_temp) + i + 1] = hex_temp[i];
-            }
-          } 
-        }
+
+          else {
           
-        printf("%d번째 줄 완성된 obj_code : %s\n", obj_code);
-      } //  format-3,4 end
-    } //  f != NONE end
-
-    else {  //  mnemonic이 Assembler Directives일 경우
+          }
+        } //  format-3 end
+      }
+       
+    } //  none assebler directive end
+    else {  //  mnemonic이 assembler directive일 경우
     
-    } //  f == NONE end
+    }
+
 
   } //  while-end
 
