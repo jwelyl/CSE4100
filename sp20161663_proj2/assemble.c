@@ -3,16 +3,26 @@
 #include "optable.h"
 #include "symtable.h"
 
-int line = 0;             //  listing file에 입력할 줄 번호(5부터 5씩 증가)
-int start_address = 0;    //  starting address
-int LOCCTR = 0;           //  Location Counter
-int program_size = 0;     //  Program Size = Location Counter - starting address
+int line;             //  listing file에 입력할 줄 번호(5부터 5씩 증가)
+int start_address;    //  starting address
+int LOCCTR;           //  Location Counter
+int program_size;     //  Program Size = Location Counter - starting address
+int format_4;         //  format 4 mnemonic 개수
 
 char program_name[PROGRAM_NAME];
 char label[STRING_SIZE];
 char mnemonic[STRING_SIZE];
 char operand[STRING_SIZE];
 char locctr_array[LOCCTR_SIZE];
+
+void init_variables() {
+  //  pass1 시작 전 변수를 초기화한다.
+  line = 0;
+  start_address = 0;
+  LOCCTR = 0;
+  program_size = 0;
+  format_4 = 0;
+}
 
 int operand_to_dec() {  //  필요할 경우 10진수 배열을 10진수로 정수로 변환
   int i = strlen(operand) - 1;
@@ -58,11 +68,12 @@ void reset_indices(int* ls, int* le, int* ms, int* me, int* os, int* oe) {
 }
 
 //  pass 1,2를 위한 입력 문자열 처리
-int process_input_string(char* input, int pass,
+int process_input_string(char* input, int pass, int* locctr,
   int* ls, int* le, int* ms, int* me, int* os, int* oe) {
   //  assembly source file을 한 줄씩 읽어서 label, opcode_mnemonic, operand를 분리
   //  매개변수 pass가 1일 경우, pass_1에 대한 입력 문자열 처리
   //  매개변수 pass가 2일 경우, pass_2에 대한 입력 문자열 처리
+  //  pass_2일 경우 매개변수 포인터 locctr에 현재 줄의 LOCCTR 저장
   //  정상 처리되면 TRUE, 에러 발생시 FALSE 반환함
   int comma = FALSE;    //  operand가 두 개일경우 구분
   int sec_opr = FALSE;  //  second operand  
@@ -77,6 +88,21 @@ int process_input_string(char* input, int pass,
       return TRUE;
   }
   else if(pass == 2) {
+    *locctr = 0;
+    int mult = 1;
+
+    for(i = 3; i >= 0; i--) {
+      if('0' <= input[i] && input[i] <= '9')
+        *locctr += (input[i] - '0') * mult;
+      else if('A' <= input[i] && input[i] <= 'F')
+        *locctr += (input[i] - 'A' + 10) * mult;
+      else {
+        printf("intermediate file LOCCTR error at line %d\n");
+        return FALSE;
+      }
+      mult *= 16;
+    }
+
     start = 5;
     if(input[0] == ' ' || input[0] == '\t' || input[0] == '.') // pass2 과정에서 해당 줄은 주석 또는 빈 줄이므로 더 처리할 게 없음
       for(i = 0; i < INPUT_LEN; i++)  //  해당 줄이 정말 주석인지 검사     
@@ -325,6 +351,9 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   int add; //  add : LOCCTR addition
   int i, f;   //  looping index, format
 
+  //  전역변수 초기화
+  init_variables();
+
   printf("intermediate file name : %s\n", mid_filename);
 
   *fp_mid = fopen(mid_filename, "w");
@@ -337,7 +366,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   fgets(input, INPUT_LEN, fp_asm);
   input[strlen(input) - 1] = '\0';  //  '\n'키 제거
 
-  if(!process_input_string(input, 1, &ls, &le, &ms, &me, &os, &oe)) 
+  if(!process_input_string(input, 1, NULL, &ls, &le, &ms, &me, &os, &oe)) 
       return FALSE;
   line += 5;
 
@@ -361,7 +390,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
     input[strlen(input) - 1] = '\0';  //  '\n'키 제거
     line += 5;
 
-    if(!process_input_string(input, 1, &ls, &le, &ms, &me, &os, &oe)) 
+    if(!process_input_string(input, 1, NULL, &ls, &le, &ms, &me, &os, &oe)) 
       return FALSE;
 
     if(!strcmp(mnemonic, "END")) {  //  마지막 줄일 경우
@@ -399,6 +428,8 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
       else {  //  3/4 형식일 경우
         if(mnemonic[0] == '+') {// 4형식일 경우
           add = 4;
+          //  relocation 시 수정해야할 개수
+          if(operand[0] != '#') format_4 += 1;
         } else {
           add = 3;
         }
@@ -459,9 +490,10 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   fprintf(*fp_mid, "\t%s\n", input);
   
   program_size = LOCCTR - start_address;
-
+//
   printf("program name : %s\nprogram_size : %X\n", program_name, program_size);
-
+  printf("수정해야 할 format 4 개수 : %d\n", format_4);
+  //
   line = 0;
   fclose(fp_asm);
   return TRUE;
@@ -481,12 +513,16 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   char h_record[HEADER] = {0, };
   char t_record[TEXT] = {0, };
   char m_record[MODIFICATION] = {0, };
-  
-  char obj_bin[OBJ_BIN] = {0, };  //  object code를 2진수로 작성
-  //  0 ~ 5 : opcode
-  //  6 : n, 7 : i, 8 : x, 9 : b, 10 : p, 11 : e
-  //  12 ~ 23 : disp(Format-3), 12 ~ 31(Format-4)
-  char obj_hex[OBJ_HEX] = {0, };  //  2진수 object code를 16진수로 변환
+  char h_temp[7];  //  Header record 작성용 배열
+
+  char obj_code[OBJ_HEX] = {0, }; //  lst, obj 파일에 실제 입력할 hex object code
+  char obj_bin[13] = {0, };       //  opcode(0~5), n(6), i(7), x(8), b(9), p(10), e(11)
+  //  opcode와 n, i, x, b, p, e 결정 후 obj_code의 앞의 3자리 16진수로 변환
+  int* pos_to_mod = (int*)malloc(sizeof(int) * format_4);
+  //  수정해야 할 4형식 명령어 object code 위치 저장할 배열
+  int locctr; //  현재 줄의 LOCCTR
+  int pc;     //  현재 줄의 PROCESS COUNTER;
+  int base;   //  B 레지스터에 저장된 값
 
   *fp_mid = fopen(mid_filename, "r");
   if(!(*fp_mid)) {
@@ -499,6 +535,31 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   *fp_lst = fopen(lst_filename, "w");
   *fp_obj = fopen(obj_filename, "w");
 
+  //  read first input line
+  fgets(input, INPUT_LEN, *fp_mid);
+  input[strlen(input) - 1] = '\0';  //  '\n'키 제거
+
+  if(!process_input_string(input, 2, &locctr, &ls, &le, &ms, &me, &os, &oe))
+    return FALSE;
+  line += 5;
+
+  if(!strcmp(mnemonic, "START"))  //  lst 파일 작성
+    fprintf(*fp_lst, "%3d\t%s\n", line, input);
+  printf("첫째줄 LOCCTR = %#X\n", locctr);
+
+  //  obj 파일 작성
+  h_record[0] = 'H';
+  strcat(h_record, program_name);
+  for(i = strlen(h_record); i < 7; i++)
+    h_record[i] = ' ';
+
+  dec_to_hex(start_address, h_temp, 7);
+  strcat(h_record, h_temp); //  시작 주소를 16진수로 변환 후 붙여넣음
+  
+  dec_to_hex(program_size, h_temp, 7);
+  strcat(h_record, h_temp); //  프로그램 크기를 16진수로 변환 후 붙여 넣음
+  fprintf(*fp_obj, "%s\n", h_record);
+/*
   while(fgets(input, INPUT_LEN, *fp_mid)) {
     input[strlen(input) - 1] = '\0';
 
@@ -516,8 +577,8 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
     if(os != NONE && oe != NONE)
       printf("operand : %s\t\n", operand);
     else printf("\t\n");
-
   }
-  
+*/  
+  line = 0;
   return TRUE;
 }

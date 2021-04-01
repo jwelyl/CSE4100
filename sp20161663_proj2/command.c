@@ -877,15 +877,22 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     if(!error_flag) {
 
       if(!pass_1(filename, mid_filename, fp, &fp_mid)) {  //  pass 1 과정에서 error 발생
-        fclose(fp_mid);
+        fclose(fp);
+        
+        if(!fp_mid)
+          fclose(fp_mid);
+        
         remove(mid_filename); //  intermediate file 제거
         delete_symtable();    //  남은 symtable 제거
         return TRUE;
       }
 
+      //  pass1 성공 시 intermdiate file 닫음
       fclose(fp_mid);
+      
       if(!pass_2(filename, mid_filename, lst_filename, obj_filename, &fp_mid, &fp_lst, &fp_obj)) { //  pass 2 과정에서 error 발생 
-        fclose(fp_mid);
+        if(!fp_mid)      
+          fclose(fp_mid);
         fclose(fp_lst);
         fclose(fp_obj);
         remove(mid_filename);
@@ -903,6 +910,11 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       }
       //  assemble이 성공했으므로 latest_table을 갱신함
       make_latest_symtable();
+
+      fclose(fp_mid);
+      fclose(fp_lst);
+      fclose(fp_obj);
+//      remove(mid_filename);
 
       sprintf(queue_input, "%s %s", cmd, filename);
       enqueue(queue_input);
