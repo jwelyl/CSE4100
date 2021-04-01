@@ -38,24 +38,6 @@ int operand_to_dec() {  //  필요할 경우 10진수 배열을 10진수로 정�
   return ret;
 }
 
-int hex_to_bin(char hex, char* bin) { //  0 ~ F 16진수를 4bits 2진수로 변환
-  int dec, i;
-
-  if('0' <= hex && hex <= '9') dec = hex - '0';
-  else if('A' <= hex && hex <= 'F') dec = hex - 'A' + 10;
-  else {
-    printf("opcode error at line %d\n", line);
-    return FALSE;
-  }
-
-  for(i = 3; i >= 0; i++) {
-    bin[i] = dec % 2;
-    dec = dec / 2;
-  }
-
-  return TRUE;
-}
-
 int hex_to_dec(char* hex, int* dec) {  // 16진수를 10진수로 변경 
   //  16진수를 10진수로 변환 성공 시 TRUE, 실패 시 FALSE 반환
   int i = strlen(hex) - 2;
@@ -108,21 +90,17 @@ int process_input_string(char* input, int pass, int* locctr,
   else if(pass == 2) {
     *locctr = 0;
     int mult = 1;
-    
-    if(('0' <= input[0] && input[0] <= '9') || ('A' <= input[0] && input[0] <= 'F')) { 
-      //  LOCCTR이 존재하는 줄일 경우 계산하여 pass_2에 전달함
-      for(i = 3; i >= 0; i--) {
-        if('0' <= input[i] && input[i] <= '9')
-          *locctr += (input[i] - '0') * mult;
-        else if('A' <= input[i] && input[i] <= 'F')
-          *locctr += (input[i] - 'A' + 10) * mult;
-        else {
-          printf("{%c}\n", input[i]);
-          printf("intermediate file LOCCTR error at line %d\n", line);
-          return FALSE;
-        }
-        mult *= 16;
+
+    for(i = 3; i >= 0; i--) {
+      if('0' <= input[i] && input[i] <= '9')
+        *locctr += (input[i] - '0') * mult;
+      else if('A' <= input[i] && input[i] <= 'F')
+        *locctr += (input[i] - 'A' + 10) * mult;
+      else {
+        printf("intermediate file LOCCTR error at line %d\n");
+        return FALSE;
       }
+      mult *= 16;
     }
 
     start = 5;
@@ -566,10 +544,7 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
 
   if(!strcmp(mnemonic, "START"))  //  lst 파일 작성
     fprintf(*fp_lst, "%3d\t%s\n", line, input);
-
-  //
-  printf("%3d LOCCTR = %#X\n", line, locctr);
-  //
+  printf("첫째줄 LOCCTR = %#X\n", locctr);
 
   //  obj 파일 작성
   h_record[0] = 'H';
@@ -583,34 +558,26 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   dec_to_hex(program_size, h_temp, 7);
   strcat(h_record, h_temp); //  프로그램 크기를 16진수로 변환 후 붙여 넣음
   fprintf(*fp_obj, "%s\n", h_record);
-
-  //  reading from second line
+/*
   while(fgets(input, INPUT_LEN, *fp_mid)) {
-    input[strlen(input) - 1] = '\0';  //  '\n' 키 제거
-    line += 5;
+    input[strlen(input) - 1] = '\0';
 
-    if(!process_input_string(input, 2, &locctr, &ls, &le, &ms, &me, &os, &oe))
+    if(!process_input_string(input, 2, &ls, &le, &ms, &me, &os, &oe)) 
       return FALSE;
 
-    if(!strcmp(mnemonic, "END")) // 마지막 줄일 경우
-      break;
+    if(ls != NONE && le != NONE) 
+      printf("label : %s\t", label);
+    else printf("\t");
 
-    //
-    printf("%3d LOCCTR = %#X\n", line, locctr);
-    //
+    if(ms != NONE && me != NONE)
+      printf("mnemonic : %s\t", mnemonic);
+    else printf("\t");
 
-    if(input[0] == ' ' || input[0] == '\t' || input[0] == '.') { //  주석 또는 빈 줄인 경우
-      fprintf(*fp_lst, "%3d\t%s\n", line, input);
-      continue;
-    }
-
-
-  } //  while-end
-
-  //
-  printf("%3d LOCCTR = %#X\n", line, locctr);
-  //
-
+    if(os != NONE && oe != NONE)
+      printf("operand : %s\t\n", operand);
+    else printf("\t\n");
+  }
+*/  
   line = 0;
   return TRUE;
 }

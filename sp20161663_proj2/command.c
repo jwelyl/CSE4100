@@ -895,7 +895,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
           fclose(fp_mid);
         fclose(fp_lst);
         fclose(fp_obj);
-        remove(mid_filename);
+//        remove(mid_filename);
         remove(lst_filename);
         remove(obj_filename);
         delete_symtable();  //  pass 1에서 만들어진 symtable 제거
