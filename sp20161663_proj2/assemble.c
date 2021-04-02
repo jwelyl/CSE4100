@@ -48,7 +48,7 @@ int hex_to_bin(char hex, char* bin) { //  0 ~ F 16진수를 4bits 2진수로 변
     return FALSE;
   }
 
-  printf("dec = %d\n", dec);
+//  printf("dec = %d\n", dec);
 
   for(i = 3; i >= 0; i--) {
     if(dec % 2 == 0) bin[i] = '0';
@@ -57,7 +57,7 @@ int hex_to_bin(char hex, char* bin) { //  0 ~ F 16진수를 4bits 2진수로 변
   }
 
   //
-  printf("변환된 이진수 : %s(%zu)\n", bin, strlen(bin));
+  //  printf("변환된 이진수 : %s(%zu)\n", bin, strlen(bin));
   //
   return TRUE;
 }
@@ -123,7 +123,7 @@ int process_input_string(char* input, int pass, int* locctr,
         else if('A' <= input[i] && input[i] <= 'F')
           *locctr += (input[i] - 'A' + 10) * mult;
         else {
-          printf("{%c}\n", input[i]);
+//          printf("{%c}\n", input[i]);
           printf("intermediate file LOCCTR error at line %d\n", line);
           return FALSE;
         }
@@ -198,7 +198,6 @@ int process_input_string(char* input, int pass, int* locctr,
 
       else if(*oe != NONE) {
         if(input[i] != ' ' && input[i] != '\t') {
-          printf("label 존재 x, input[%d] = %c(%d) ", i, input[i], input[i]);
           printf("Assembly source file error at line %d during pass %d\n", line, pass);
           return FALSE;
         }
@@ -288,7 +287,6 @@ int process_input_string(char* input, int pass, int* locctr,
 
       else if(*oe != NONE) {
         if(input[i] != ' ' && input[i] != '\t') {
-          printf("label 존재 o, input[%d] = %c(%d) ", i, input[i], input[i]);
           printf("Assembly source file error at line %d during pass %d\n", line, pass);
           return FALSE;
         }
@@ -329,22 +327,8 @@ int get_bytes(char* operand) {  //  assembler directives인 BYTE의 operand byte
   int ret = 0, i;
 
   if(strlen(operand) < 4) return NONE;
-/*
-  if(operand[0] == 'C' || operand[0] == 'X') {
-    if(operand[1] != '\'')
-      return NONE;
-    for(i = 2; i < strlen(operand); i++) {
-      if(operand[i] == '\'') break;
-      ret++;
-    }
-
-    if(operand[0] == 'X') {
-      if(ret % 2 == 1) return NONE;
-      else ret = ret / 2;
-    }
-  }
-*/
-   if(operand[1] != '\'')
+   
+  if(operand[1] != '\'')
       return NONE;
 
   if(operand[0] == 'C') {
@@ -398,7 +382,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   //  전역변수 초기화
   init_variables();
 
-  printf("intermediate file name : %s\n", mid_filename);
+//  printf("intermediate file name : %s\n", mid_filename);
 
   *fp_mid = fopen(mid_filename, "w");
   if(!(*fp_mid)) {
@@ -533,7 +517,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   fprintf(*fp_mid, "\t%s\n", input);
   
   program_size = LOCCTR - start_address;
-//
+  //
   printf("program name : %s\nprogram_size : %X\n", program_name, program_size);
   printf("수정해야 할 format 4 개수 : %d\n", format_4);
   //
@@ -558,9 +542,11 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   char h_temp[7];  //  Header record 작성용 배열
 
   char opr1[STRING_SIZE] = {0, }, opr2[STRING_SIZE] = {0, };  //  operand 최대 2개 가능
+  char opr[STRING_SIZE] = {0, };  //  symtable에서 찾을 operand('#', '@' 제거)/
   int os1, oe1, os2, oe2, comma;  //  각 operand의 시작, 끝 인덱스, comma 존재
   char opcode[OPCODE] = {0, };  //  optable로부터 opcode를 받아옴
   char obj_code[OBJ_HEX] = {0, }; //  lst, obj 파일에 실제 입력할 hex object code
+  int opr_const;  //  operand가 상수인지 확인
   int* pos_to_mod = (int*)malloc(sizeof(int) * format_4);
   //  수정해야 할 4형식 명령어 object code 위치 저장할 배열
   int locctr;         //  현재 줄의 LOCCTR
@@ -590,10 +576,6 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   if(!strcmp(mnemonic, "START"))  //  lst 파일 작성
     fprintf(*fp_lst, "%3d\t%s\n", line, input);
 
-  //
-  printf("%3d LOCCTR = %#X\n", line, locctr);
-  //
-
   //  obj 파일 작성
   h_record[0] = 'H';
   strcat(h_record, program_name);
@@ -619,10 +601,6 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
     if(!strcmp(mnemonic, "END")) // 마지막 줄일 경우
       break;
 
-    //
-    printf("%3d LOCCTR = %#X\n", line, locctr);
-    //
-
     if(input[0] == ' ' || input[0] == '\t' || input[0] == '.') { //  주석 또는 빈 줄인 경우
       fprintf(*fp_lst, "%3d\t%s\n", line, input);
       continue;
@@ -635,9 +613,7 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
         opr1[i] = 0;
         opr2[i] = 0;
       }
-      //
-      printf("분리 전 operand : %s(%zu)\n", operand, strlen(operand));
-      //
+      
       for(i = 0; i < strlen(operand); i++) {
         if(operand[i] == ',') {
           comma = TRUE;
@@ -664,15 +640,10 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
       else oe1 = strlen(operand) - 1;
 
       for(i = os1; i <= oe1; i++) 
-        opr1[i - os1] = operand[i];
+        opr1[i - os1] = operand[i];   //  operand가 1개일 경우, 해당 operand
       if(os2 != NONE && oe2 != NONE)
         for(i = os2; i <= oe2; i++)
           opr2[i - os2] = operand[i];
-
-      //
-      printf("분리된 opr1 = %s\n", opr1);
-      printf("분리된 opr2 = %s\n", opr2);
-      //
     } //  operand 분리 end
 
     if(mnemonic[0] == '+') {  //  4형식일 경우
@@ -707,17 +678,15 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
             printf("Register error at line %d\n", line);
             return FALSE;
           }
-          if(reg2 == NONE) reg2 == 0;
+          if(reg2 == NONE) reg2 = 0;
           obj_code[2] = reg1 + '0';
           obj_code[3] = reg2 + '0';
-
-          printf("%d번째 줄 완성된 obj_code : %s\n", obj_code);
         }
       } //  format 1 or 2 end
 
       else if(f == 3 || f == 4) {
         int num = 0;
-       
+        memset(opr, 0, strlen(opr));    // opr 초기화
         if(os == NONE && oe == NONE) {  //  operand 없을 경우
           //  n-bit : 1, i-bit: 1
           num = 3;  //  11b
@@ -725,22 +694,33 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
         else if(operand[0] == '#') { //  immediate addressing
           // n-bit : 0, i-bit : 1
           num = 1;  //  01b
+          opr_const = TRUE;
+          for(i = 1; i < strlen(opr1); i++) {
+            if(!('0' <= opr1[i] && opr1[i] <= '9')) opr_const =FALSE;  //  10진수여야 상수임
+            opr[i - 1] = opr1[i]; 
+          }
         }
         else if(operand[0] == '@') {  //  indirect addressing
           //  n-bit : 1, i-bit : 0
           num = 2;  //  10b
+          opr_const = FALSE;
+          for(i = 1; i < strlen(opr1); i++)
+            opr[i - 1] = opr1[i];
         }
         else {  //  simple addressing
           //  n-bit : 1, i-bit : 1
           num = 3;  //  11b
+          opr_const = FALSE;
+          for(i = 0; i < strlen(opr1); i++)
+            opr[i] = opr1[i];
         }
 
-        if(opcode[1] == '0' || opcode[1] == '4' || opcode[1] == '8')
+        if(opcode[1] == '0' || opcode[1] == '4' || opcode[1] == '8')  //  00__b or 01__b or 10__b
           num = (opcode[1] - '0') + num;
-        else if(opcode[1] == 'C')
-          num = (opcode[1] - 'A' + 10) + num
+        else if(opcode[1] == 'C')         //  11__b
+          num = (opcode[1] - 'A' + 10) + num;
         else {
-          printf("opcode error at line %d\n", line);
+          printf("opcode error(not '0', '4', '8', 'C') at line %d\n", line);
         }
 
         if(0 <= num && num <= 9)
@@ -754,22 +734,54 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
           num = 8;  //  1___b
         }
 
+        if(!strcmp(mnemonic, "LDB") || !strcmp(mnemonic4, "LDB")) {
+          if(operand[0] == '#') {
+            find_locctr(opr, &base); 
+          }
+
+          //
+          printf("base = %d(%X) at line %d\n", base, base, line);
+          //  
+        }
+
         int TA;
         char hex_temp[9] = {0, }; //  int 32-bits, 8-half-bytes
         
-        if(os != NONE && oe != NONE)
-          find_locctr(opr1, &TA);
+        if(os != NONE && oe != NONE) {
+          if(!opr_const) {
+//            printf("line %d에서 opr %s은 상수 아님!\n", line, opr);
+
+//            printf("TA 찾기 위한 operand : %s at line %d\n", opr, line);
+            find_locctr(opr, &TA); //  상수가 아닐경우
+          }
+          else {  //  상수일 경우
+            printf("line %d에서 opr %s은 상수임!\n", line, opr);
+            TA = 0;
+            int mul = 1;
+            for(i = strlen(opr) - 1; i >= 0; i--) {
+              printf("%c\n", opr[i]);
+              TA += ((opr[i] - '0') * mul);
+              mul *= 10;
+            }
+            printf("line %d에서 opr이 상수일때 TA = %X(%d)\n", line, TA, TA); 
+          }
+        }
         else TA = 0;
 
         if(f == 3) {  //  특히 format-3일 경우
           if(os == NONE && oe == NONE)  //  operand가 없을 경우
             disp = 0;
+          else if(opr_const) {  //  operand가 상수일 경우
+            //  b-bit : 0, p-bit : 0, e-bit : 0
+            num += 0; //  _000b 추가
+            disp = TA;
+          }
           else if(-2048 <= (TA - pc) && (TA -pc) <= 2047) {
             disp = TA - pc; //  PC-relative addressing
             //  b-bit : 0, p-bit : 1, e-bit : 0
-            num += 2; //  __1_b 추가 
+            num += 2; //  _010b 추가 
           }
-          else if(base == NONE) {
+          else if(base == NONE) { //  PC-relative addressing이 불가능한데 Base에 저장된 값이 없을 경우
             printf("Base-relativie addressing error at line %d\n", line);
             return FALSE;
           }
@@ -779,7 +791,7 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
             num += 4; //  _1__b 추가
           }
           else {  //  Format 3 error
-            printf("Invalid Format 3 error at line %d\n", line);
+            printf("Invalid Format 3 error(Format 4 needed) at line %d\n", line);
             return FALSE;
           }
         }
@@ -798,11 +810,11 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
           return FALSE;
         }
 
-        sprintf(hex_temp, "%X", disp);
+        sprintf(hex_temp, "%X", disp);  //  disp(또는 address를 16진수로 임시 배열에 옮김)
 
         int end;
-        if(f == 3) end = 5;
-        if(f == 4) end = 7;
+        if(f == 3) end = 5; //  3형식일때 마지막 index
+        if(f == 4) end = 7; //  4형식일떼
 
         if(disp < 0) {  //  3형식일 경우만 해당
           if(f == 4) {
@@ -822,19 +834,59 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
           } 
         }
           
-        printf("%d번째 줄 완성된 obj_code : %s\n", obj_code);
       } //  format-3,4 end
     } //  f != NONE end
 
     else {  //  mnemonic이 Assembler Directives일 경우
-    
+      if(!strcmp(mnemonic, "WORD"));
+      else if(!strcmp(mnemonic, "BYTE")) {
+        if(!(os != NONE && oe != NONE)) {
+          printf("operand of BYTE directive does not exist at line %d\n", line);
+          return FALSE;
+        }
+        else {
+          if(operand[0] == 'C') {
+            char hex_temp[3] = {0, };
+            int comma = FALSE;
+            for(i = 1; ; i++) {
+              if(!comma) {
+                if(operand[i] == '\'') comma = TRUE;  //  첫 comma일 경우
+              }
+              else {
+                if(operand[i] == '\'') break; //  마지막 comma일 경우   
+                memset(hex_temp, 0, 3);
+                sprintf(hex_temp, "%X", operand[i]);
+                strcat(obj_code, hex_temp);
+              }
+            }
+          }
+          else if(operand[0] == 'X') {
+            int comma = FALSE;
+            int j = 0;
+            for(i = 1; ; i++) {
+              if(!comma) {
+                if(operand[i] == '\'') comma = TRUE;
+              }
+              else {
+                if(operand[i] == '\'') break;
+                obj_code[j++] = operand[i];
+              }
+            }
+          }
+        }
+      } //  BYTE-END
+      else ;
     } //  f == NONE end
 
+    if(os != NONE && oe != NONE) {
+      if(strlen(operand) == 1) fprintf(*fp_lst, "%3d\t%s\t\t%s\n", line, input, obj_code);
+      else fprintf(*fp_lst, "%3d\t%s\t%s\n", line, input, obj_code);
+    }
+    else
+      fprintf(*fp_lst, "%3d\t%s\t\t%s\n", line, input, obj_code);
   } //  while-end
 
-  //
-  printf("%3d LOCCTR = %#X\n", line, locctr);
-  //
+  fprintf(*fp_lst, "%3d\t%s\n", line, input);
 
   line = 0;
   return TRUE;

@@ -71,7 +71,7 @@ int push_stnode(char* label, int locctr) {
 int find_label(char* label) {
   int idx = st_hash_function(label);
   if(idx == NONE) {
-    printf("유효하지 않은 label\n");
+//    printf("유효하지 않은 label %s\n", label);
     return FALSE;
   }  
 
@@ -88,7 +88,7 @@ int find_label(char* label) {
 int find_locctr(char* label, int* locctr) { //  label의 LOCCTR 찾기
   int idx = st_hash_function(label);
   if(idx == NONE) {
-    printf("유효하지 않은 label\n");
+//    printf("유효하지 않은 label %s\n", label);
     return FALSE;
   }  
 
