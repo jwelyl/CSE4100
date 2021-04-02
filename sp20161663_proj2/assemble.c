@@ -533,12 +533,13 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   int ls = NONE, le = NONE;
   int ms = NONE, me = NONE;
   int os = NONE, oe = NONE;
-  int i, f;
+  int i, j, f;
   //  여기까지는 pass_1과 같음
   //  아래는 pass_2에 추가된 변수
   char h_record[HEADER] = {0, };
   char t_record[TEXT] = {0, };
   char m_record[MODIFICATION] = {0, };
+  char e_record[END] = {0, };
   char h_temp[7];  //  Header record 작성용 배열
 
   char opr1[STRING_SIZE] = {0, }, opr2[STRING_SIZE] = {0, };  //  operand 최대 2개 가능
@@ -553,6 +554,8 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   int pc;             //  현재 줄의 PROGRAM COUNTER;
   int base = NONE;    //  B 레지스터에 저장된 값
   int disp;           //  object code 작성에 필요한 disp(3형식) 또는 address(4형식)
+  int text_start = 0; //  text record가 들어가기 시작할 위치
+  int m_idx = 0;
 
   *fp_mid = fopen(mid_filename, "r");
   if(!(*fp_mid)) {
@@ -589,6 +592,13 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   strcat(h_record, h_temp); //  프로그램 크기를 16진수로 변환 후 붙여 넣음
   fprintf(*fp_obj, "%s\n", h_record);
 
+  sprintf(t_record, "%7X", locctr);
+  t_record[0] = 'T';
+  for(i = 0; i < 7; i++) {
+    if(t_record[i] == ' ')
+      t_record[i] = '0';
+  }
+  
   //  reading from second line
   while(fgets(input, INPUT_LEN, *fp_mid)) {
     input[strlen(input) - 1] = '\0';  //  '\n' 키 제거
@@ -884,10 +894,45 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
     }
     else
       fprintf(*fp_lst, "%3d\t%s\t\t%s\n", line, input, obj_code);
+    
+    //  modification 필요한 위치 찾기 
+    if(mnemonic[0] == '+' && operand[0] != '#') {
+      pos_to_mod[m_idx++] = text_start / 2 + 1;
+      printf("line %d에 수정 필요 위치 : %X\n", line, pos_to_mod[m_idx - 1]); 
+    }
+    text_start += strlen(obj_code);
+
   } //  while-end
 
+  //  마지막 줄 lst 파일에 쓰기 
   fprintf(*fp_lst, "%3d\t%s\n", line, input);
+ 
+  //  Modification record 작성
+  for(i = 0; i < format_4; i++) {
+    memset(m_record, 0, 10);
+    sprintf(m_record, "%7X", pos_to_mod[i]);
+    m_record[0] = 'M';
+    for(j = 0; j < 9; j++) {
+      if(m_record[j] == ' ')
+        m_record[j] = '0';
+    }
+    strcat(m_record, "05"); //  format-4 address 수정은 5자리
+    fprintf(*fp_obj, "%s\n", m_record);
+  } 
+  //  End record 작성
+  int excutable;
+  char temp[7] = {0, };
+  
+  e_record[0] = 'E';
+  find_locctr(operand, &excutable);
+  printf("excutable : %X\n", excutable);
+  dec_to_hex(excutable, temp, 7);
+  strcat(e_record, temp);
+  fprintf(*fp_obj, "%s\n", e_record);
 
   line = 0;
+  free(pos_to_mod);
+  pos_to_mod = NULL;
+
   return TRUE;
 }
