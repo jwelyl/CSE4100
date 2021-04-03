@@ -775,10 +775,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       return TRUE;
     }
 
-    //
     print_symtable();
-    printf("symbol 명령어는 구현 예정\n");
-    //
     enqueue(cmd);
   }
   
@@ -902,8 +899,6 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
         return TRUE;        
       }
 
-      //
-      printf("assemble 명령어는 구현 예정\n");
       assembled = TRUE;  //  가장 최근의 assemble 명령 성공함
       if(!latest_assembled) {  //  최초로 assemble 명령이 성공할 경우
         latest_assembled = TRUE;
@@ -916,6 +911,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       fclose(fp_obj);
       remove(mid_filename);
 
+      printf("[%s], [%s]\n", lst_filename, obj_filename);
       sprintf(queue_input, "%s %s", cmd, filename);
       enqueue(queue_input);
     }

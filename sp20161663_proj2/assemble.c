@@ -517,10 +517,6 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   fprintf(*fp_mid, "\t%s\n", input);
   
   program_size = LOCCTR - start_address;
-  //
-  printf("program name : %s\nprogram_size : %X\n", program_name, program_size);
-  printf("수정해야 할 format 4 개수 : %d\n", format_4);
-  //
   line = 0;
   fclose(fp_asm);
   return TRUE;
@@ -554,7 +550,8 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   int pc;             //  현재 줄의 PROGRAM COUNTER;
   int base = NONE;    //  B 레지스터에 저장된 값
   int disp;           //  object code 작성에 필요한 disp(3형식) 또는 address(4형식)
-  int text_start = 0; //  text record가 들어가기 시작할 위치
+  int text_length = 0;   //  text record에 들어간 object code 길이
+  int text_start = 0; //  object code가 들어갈 위치
   int m_idx = 0;
 
   *fp_mid = fopen(mid_filename, "r");
@@ -592,12 +589,17 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   strcat(h_record, h_temp); //  프로그램 크기를 16진수로 변환 후 붙여 넣음
   fprintf(*fp_obj, "%s\n", h_record);
 
+  // text_record 초기화함
+  int init = TRUE;
+  memset(t_record, '0', TEXT - 1);
+  t_record[TEXT - 1] = 0;
   sprintf(t_record, "%7X", locctr);
-  t_record[0] = 'T';
-  for(i = 0; i < 7; i++) {
-    if(t_record[i] == ' ')
+
+  for(i = 0; i < 9; i++) {
+    if(!(('0' <= t_record[i] && t_record[i] <= '9') || ('A' <= t_record[i] && t_record[i] <= 'F')))
       t_record[i] = '0';
   }
+  t_record[0] = 'T';
   
   //  reading from second line
   while(fgets(input, INPUT_LEN, *fp_mid)) {
@@ -748,10 +750,6 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
           if(operand[0] == '#') {
             find_locctr(opr, &base); 
           }
-
-          //
-          printf("base = %d(%X) at line %d\n", base, base, line);
-          //  
         }
 
         int TA;
@@ -759,21 +757,15 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
         
         if(os != NONE && oe != NONE) {
           if(!opr_const) {
-//            printf("line %d에서 opr %s은 상수 아님!\n", line, opr);
-
-//            printf("TA 찾기 위한 operand : %s at line %d\n", opr, line);
             find_locctr(opr, &TA); //  상수가 아닐경우
           }
           else {  //  상수일 경우
-            printf("line %d에서 opr %s은 상수임!\n", line, opr);
             TA = 0;
             int mul = 1;
             for(i = strlen(opr) - 1; i >= 0; i--) {
-              printf("%c\n", opr[i]);
               TA += ((opr[i] - '0') * mul);
               mul *= 10;
             }
-            printf("line %d에서 opr이 상수일때 TA = %X(%d)\n", line, TA, TA); 
           }
         }
         else TA = 0;
@@ -897,12 +889,97 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
     
     //  modification 필요한 위치 찾기 
     if(mnemonic[0] == '+' && operand[0] != '#') {
-      pos_to_mod[m_idx++] = text_start / 2 + 1;
-      printf("line %d에 수정 필요 위치 : %X\n", line, pos_to_mod[m_idx - 1]); 
+      pos_to_mod[m_idx++] = text_length / 2 + 1;
     }
-    text_start += strlen(obj_code);
+    
+    /* Text record 작성 */
+    if(init) {  //  새로운 줄에 처음부터 작성해야 할 경우
+      text_start = 0;
+      memset(t_record, '0', TEXT - 1);
+      t_record[TEXT - 1] = 0;
 
+      if(!strcmp(mnemonic, "RESW") || !strcmp(mnemonic, "RESB")); // obj_code 작성 x
+      else {
+        sprintf(t_record, "%7X", locctr); //  
+        for(i = 0; i < 9; i++) {
+          if(!(('0' <= t_record[i] && t_record[i] <= '9') || ('A' <= t_record[i] && t_record[i] <= 'F')))
+            t_record[i] = '0';
+        }
+        t_record[0] = 'T';
+
+        for(i = 0; i < strlen(obj_code); i++) //  t_record에 obj_code를 옮김
+          t_record[9 + text_start + i] = obj_code[i];
+        text_start += strlen(obj_code);
+        init = FALSE;
+      }
+    }
+    else {
+//      printf("line %d, init = FALSE, obj_code : (%d)%s(%zu)\n", line, text_start + 9, obj_code, text_start + strlen(obj_code) + 8);
+      if(!strcmp(mnemonic, "RESW") || !strcmp(mnemonic, "RESB")) { //  줄 바꿔야 함
+          t_record[text_start + 9] = '\0';
+
+          //  text record 길이정보 입력 
+          t_record[7] = ((text_start / 2) / 16) + '0';
+          if((text_start / 2) % 16 > 9) 
+            t_record[8] = ((text_start / 2) % 16) + 'A' - 10;
+          else                          
+            t_record[8] = ((text_start / 2) % 16) + '0';  
+          // obj 파일에 출력
+          fprintf(*fp_obj, "%s\n", t_record);
+
+          init = TRUE;
+      }
+      else {
+        if(9 + text_start + strlen(obj_code) - 1 <= TEXT - 2) { //  obj_code를 더 작성할 수 있을 경우
+          for(i = 0; i < strlen(obj_code); i++)
+            t_record[9 + text_start + i] = obj_code[i];
+          text_start += strlen(obj_code); 
+        }
+        else {  //  길이 초과로 새로운 줄에 옮겨서 다시 작성
+          t_record[text_start + 9] = '\0';
+
+          //  text record 길이정보 입력 
+          t_record[7] = ((text_start / 2) / 16) + '0';
+          if((text_start / 2) % 16 > 9) 
+            t_record[8] = ((text_start / 2) % 16) + 'A' - 10;
+           else                          
+            t_record[8] = ((text_start / 2) % 16) + '0';  
+           // obj 파일에 출력
+           fprintf(*fp_obj, "%s\n", t_record);
+
+          init = TRUE;
+          text_start = 0;
+          memset(t_record, '0', TEXT - 1);
+          t_record[TEXT - 1] = 0;
+
+          sprintf(t_record, "%7X", locctr); //  
+          for(i = 0; i < 9; i++) {
+            if(!(('0' <= t_record[i] && t_record[i] <= '9') || ('A' <= t_record[i] && t_record[i] <= 'F')))
+              t_record[i] = '0';
+          }
+          t_record[0] = 'T';
+
+          for(i = 0; i < strlen(obj_code); i++) //  t_record에 obj_code를 옮김
+            t_record[9 + text_start + i] = obj_code[i];
+          text_start += strlen(obj_code);
+          init = FALSE;
+        }
+      }
+    }
+
+    text_length += strlen(obj_code);
   } //  while-end
+
+  t_record[text_start + 9] = '\0';
+  //  남아있는 text record 길이정보 입력 
+  t_record[7] = ((text_start / 2) / 16) + '0';
+  if((text_start / 2) % 16 > 9) 
+    t_record[8] = ((text_start / 2) % 16) + 'A' - 10;
+  else                          
+    t_record[8] = ((text_start / 2) % 16) + '0';
+
+  //  남아있는 text record 파일 출력
+  fprintf(*fp_obj, "%s\n", t_record);
 
   //  마지막 줄 lst 파일에 쓰기 
   fprintf(*fp_lst, "%3d\t%s\n", line, input);
@@ -925,7 +1002,6 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
   
   e_record[0] = 'E';
   find_locctr(operand, &excutable);
-  printf("excutable : %X\n", excutable);
   dec_to_hex(excutable, temp, 7);
   strcat(e_record, temp);
   fprintf(*fp_obj, "%s\n", e_record);

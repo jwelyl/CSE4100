@@ -162,7 +162,6 @@ int make_latest_symtable() {
         
   latest_st_num = st_num;
   st_num = 0;
-  printf("마지막 어셈블 시 라벨 개수 : %d\n", latest_st_num);
 
   if(latest_st_num == 0) {
     printf("Label 개수 0개\n");
@@ -170,9 +169,6 @@ int make_latest_symtable() {
   }
 
   if(latest_symtable) { //  이전에 assemble이 성공하여 배열이 할당된 경우
-    //
-    printf("이전에 할당된 latest_symtable 해제\n");
-    //
     free(latest_symtable);  //  동적할당 해제
     latest_symtable = NULL;
   }
@@ -189,7 +185,6 @@ int make_latest_symtable() {
         cur = cur->next;
     }
   }
-  printf("j = %d\n", j);
   
   //  복사 후 symtable 해제
   delete_symtable();
