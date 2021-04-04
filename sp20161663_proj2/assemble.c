@@ -101,7 +101,7 @@ int process_input_string(char* input, int pass, int* locctr,
   //  정상 처리되면 TRUE, 에러 발생시 FALSE 반환함
   int comma = FALSE;    //  operand가 두 개일경우 구분
   int sec_opr = FALSE;  //  second operand  
-  int i;
+  int i, mult;
   int start = 0;
 
   reset_indices(ls, le, ms, me, os, oe);
@@ -113,7 +113,7 @@ int process_input_string(char* input, int pass, int* locctr,
   }
   else if(pass == 2) {
     *locctr = 0;
-    int mult = 1;
+    mult = 1;
     
     if(('0' <= input[0] && input[0] <= '9') || ('A' <= input[0] && input[0] <= 'F')) { 
       //  LOCCTR이 존재하는 줄일 경우 계산하여 pass_2에 전달함
@@ -213,7 +213,12 @@ int process_input_string(char* input, int pass, int* locctr,
         operand[i - (*os)] = input[i];
       operand[i - (*os)] = '\0';
     } 
-   
+  
+    if(!strcmp(label, mnemonic)) {
+      printf("LABEL name and MNEMONIC are equal at line %d\n", line);
+      return FALSE;
+    }
+
     return TRUE; 
   } //  label 없는 줄 end
 
@@ -378,6 +383,7 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
   int os = NONE, oe = NONE; //  operand start, end index 
   int add; //  add : LOCCTR addition
   int i, f;   //  looping index, format
+  int mult;
 
   //  전역변수 초기화
   init_variables();
@@ -497,7 +503,14 @@ int pass_1(char* filename, char* mid_filename, FILE* fp_asm, FILE** fp_mid) {
           printf("operand of RESW directive does not exist at line %d.\n", line);
           return FALSE;
         }
-        add = 3;
+
+        add = 0;
+        mult = 1;
+        for(i = strlen(operand) - 1; i >= 0; i--) {
+          add += (operand[i] - '0') * mult;
+          mult *= 10;
+        }
+        add *= 3;
      }
 
      else { //  "BASE"
