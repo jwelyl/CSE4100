@@ -706,6 +706,9 @@ int pass_2(char* filename, char* mid_filename, char* lst_filename, char* obj_fil
           if(reg2 == NONE) reg2 = 0;
           obj_code[2] = reg1 + '0';
           obj_code[3] = reg2 + '0';
+
+          if(!strcmp(mnemonic, "CLEAR") && reg1 == B) //  만약 CLEAR B일 경우 base 레지스터를 비워야 함.
+            base = 0; //  base 레지스터를 비움
         }
       } //  format 1 or 2 end
 

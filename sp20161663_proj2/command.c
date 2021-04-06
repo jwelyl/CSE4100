@@ -6,8 +6,8 @@
 #include "assemble.h"
 
 int address = 0;
-int assembled = FALSE;       //  assemble 명령이 한번이라도 성공한 적 있을 경우 TRUE, 없을 경우 FALSE
-int latest_assembled = FALSE;  //  가장 마지막 assemble 명령 성공 시 TRUE, 실패 시 FALSE
+int assembled = FALSE;         // 가장 최근 assemble 명령이 성공 시 TRUE, 실패 시 FALSE
+int latest_assembled = FALSE;  // 최초로 assemble 명령이 성공 시 TRUE로 변경 후 유지, 한번도 성공 못했을 경우 FALSE 
 
 void clear_input_buffer() {
   while(getchar() != '\n');
@@ -904,7 +904,17 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
         latest_assembled = TRUE;
       }
       //  assemble이 성공했으므로 latest_table을 갱신함
-      make_latest_symtable();
+      if(!make_latest_symtable()) { //  Label이 하나도 없을 경우
+        if(!fp_mid)      
+          fclose(fp_mid);
+        fclose(fp_lst);
+        fclose(fp_obj);
+        remove(mid_filename);
+        remove(lst_filename);
+        remove(obj_filename);
+        delete_symtable();
+        return TRUE;
+      }
 
       fclose(fp_mid);
       fclose(fp_lst);

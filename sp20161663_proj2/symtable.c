@@ -136,6 +136,7 @@ void delete_symtable() {
     }
     st_head[i] = NULL;
   }
+  st_num = 0;
 }
 
 int st_hash_function(char* label) {
@@ -159,14 +160,14 @@ int make_latest_symtable() {
   //  동적할당한 배열에 저장한 후 symtable은 해제함
   //  매번 assemble 성공 시 호출되어 기존의 동적할당한 배열을 해제 후 새로 생성 
   int i, j = 0;
-        
-  latest_st_num = st_num;
-  st_num = 0;
-
-  if(latest_st_num == 0) {
+  
+  if(st_num == 0) {
     printf("Label 개수 0개\n");
     return FALSE;
   }
+
+  latest_st_num = st_num;
+  st_num = 0;
 
   if(latest_symtable) { //  이전에 assemble이 성공하여 배열이 할당된 경우
     free(latest_symtable);  //  동적할당 해제
