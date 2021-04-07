@@ -772,10 +772,10 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
 
     if(!latest_assembled) {  //  단 한번도 assemble 명령이 성공한 적이 없을 경우
       printf("assemble 명령이 수행된 적이 없음\n");
-      return TRUE;
     }
-
-    print_symtable();
+    else  //  assemble이 한번이라도 성공했을 경우 LABEL 출력 
+      print_symtable();
+    
     enqueue(cmd);
   }
   

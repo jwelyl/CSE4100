@@ -38,30 +38,6 @@ int operand_to_dec() {  //  필요할 경우 10진수 배열을 10진수로 정�
   return ret;
 }
 
-int hex_to_bin(char hex, char* bin) { //  0 ~ F 16진수를 4bits 2진수로 변환
-  int dec, i;
-
-  if('0' <= hex && hex <= '9') dec = hex - '0';
-  else if('A' <= hex && hex <= 'F') dec = hex - 'A' + 10;
-  else {
-    printf("opcode error at line %d\n", line);
-    return FALSE;
-  }
-
-//  printf("dec = %d\n", dec);
-
-  for(i = 3; i >= 0; i--) {
-    if(dec % 2 == 0) bin[i] = '0';
-    else bin[i] = '1';
-    dec = dec / 2;
-  }
-
-  //
-  //  printf("변환된 이진수 : %s(%zu)\n", bin, strlen(bin));
-  //
-  return TRUE;
-}
-
 int hex_to_dec(char* hex, int* dec) {  // 16진수를 10진수로 변경 
   //  16진수를 10진수로 변환 성공 시 TRUE, 실패 시 FALSE 반환
   int i = strlen(hex) - 2;
