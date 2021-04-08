@@ -107,17 +107,8 @@ int find_locctr(char* label, int* locctr) { //  label의 LOCCTR 찾기
 void print_symtable() {
   char locctr_col[LOCCTR_SIZE];
   int i;
-/*
-  for(i = 0; i < SYMTAB_SIZE; i++) {
-    SymTabNode* cur = st_head[i];
-    
-    while(cur) {
-      dec_to_hex(cur->locctr, locctr_col, LOCCTR_SIZE);
-      printf("\t%s\t%s\n", cur->label, locctr_col);
-      cur = cur->next;
-    }
-  }
-*/
+  
+  //  형식에 맞게 가장 최근에 assemble 후 symbol, location counter 출력
   for(i = 0; i < latest_st_num; i++) {
     dec_to_hex(latest_symtable[i].locctr, locctr_col, LOCCTR_SIZE);
     printf("\t%s\t%s\n", latest_symtable[i].label, locctr_col);

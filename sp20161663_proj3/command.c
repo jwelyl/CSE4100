@@ -2,9 +2,12 @@
 #include "memory.h"
 #include "queue.h"
 #include "optable.h"
+#include "symtable.h"
 #include "assemble.h"
 
 int address = 0;
+int assembled = FALSE;         // 가장 최근 assemble 명령이 성공 시 TRUE, 실패 시 FALSE
+int latest_assembled = FALSE;  // 최초로 assemble 명령이 성공 시 TRUE로 변경 후 유지, 한번도 성공 못했을 경우 FALSE 
 
 void clear_input_buffer() {
   while(getchar() != '\n');
@@ -651,10 +654,12 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
   char opt1[MAX_OPT] = {0, }, opt2[MAX_OPT] = {0, }, opt3[MAX_OPT] = {0, };
   char mnemonic[MNEMONIC] = {0, }, opcode[OPCODE] = {0, };
   char filename[FILENAME] = {0, };  //  입력 파일명
+  char* mid_filename = "intermediate_file"; //  중간 파일명
   char lst_filename[FILENAME] = {0, };  //  lst 파일명
   char obj_filename[FILENAME] = {0, };  //  obj 파일명
   char queue_input[INPUT_LEN] = {0, };  //  history queue에 삽입될 정제된 명령어
   FILE* fp = NULL;  //  입력 파일 포인터
+  FILE* fp_mid = NULL;  //  중간 파일 포인터
   FILE* fp_lst = NULL;  //  lst 파일 포인터
   FILE* fp_obj = NULL;  //  obj 파일 포인터
 
@@ -668,6 +673,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     }
     delete_queue();
     delete_optable();
+    delete_latest_symtable();
     return FALSE;
   }
  
@@ -764,9 +770,12 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       return TRUE;
     }
 
-    //
-    printf("symbol 명령어는 구현 예정\n");
-    //
+    if(!latest_assembled) {  //  단 한번도 assemble 명령이 성공한 적이 없을 경우
+      printf("assemble 명령이 수행된 적이 없음\n");
+    }
+    else  //  assemble이 한번이라도 성공했을 경우 LABEL 출력 
+      print_symtable();
+    
     enqueue(cmd);
   }
   
@@ -833,6 +842,8 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     int error_flag = FALSE, i;
     char extension[5] = {0};
 
+    assembled = FALSE;
+
     if(!check_assemble_or_type(input, opt_start, filename)) 
       error_flag = TRUE; 
 
@@ -862,14 +873,55 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
 
     if(!error_flag) {
 
-      if(!pass_1(filename, lst_filename, fp, &fp_lst)) {
-        remove(lst_filename);
+      if(!pass_1(filename, mid_filename, fp, &fp_mid)) {  //  pass 1 과정에서 error 발생
+        fclose(fp);
+        
+        if(!fp_mid)
+          fclose(fp_mid);
+        
+        remove(mid_filename); //  intermediate file 제거
+        delete_symtable();    //  남은 symtable 제거
         return TRUE;
       }
 
-      //
-      printf("assemble 명령어는 구현 예정\n");
-      //
+      //  pass1 성공 시 intermdiate file 닫음
+      fclose(fp_mid);
+      
+      if(!pass_2(filename, mid_filename, lst_filename, obj_filename, &fp_mid, &fp_lst, &fp_obj)) { //  pass 2 과정에서 error 발생 
+        if(!fp_mid)      
+          fclose(fp_mid);
+        fclose(fp_lst);
+        fclose(fp_obj);
+        remove(mid_filename);
+        remove(lst_filename);
+        remove(obj_filename);
+        delete_symtable();  //  pass 1에서 만들어진 symtable 제거
+        return TRUE;        
+      }
+
+      assembled = TRUE;  //  가장 최근의 assemble 명령 성공함
+      if(!latest_assembled) {  //  최초로 assemble 명령이 성공할 경우
+        latest_assembled = TRUE;
+      }
+      //  assemble이 성공했으므로 latest_table을 갱신함
+      if(!make_latest_symtable()) { //  Label이 하나도 없을 경우
+        if(!fp_mid)      
+          fclose(fp_mid);
+        fclose(fp_lst);
+        fclose(fp_obj);
+        remove(mid_filename);
+        remove(lst_filename);
+        remove(obj_filename);
+        delete_symtable();
+        return TRUE;
+      }
+
+      fclose(fp_mid);
+      fclose(fp_lst);
+      fclose(fp_obj);
+      remove(mid_filename);
+
+      printf("[%s], [%s]\n", lst_filename, obj_filename);
       sprintf(queue_input, "%s %s", cmd, filename);
       enqueue(queue_input);
     }
