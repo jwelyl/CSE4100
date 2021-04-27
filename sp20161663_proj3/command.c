@@ -59,7 +59,7 @@ int invalid_command(char* input, char* cmd, int* opt_start) {
      !strcmp(cmd, "dump") || !strcmp(cmd, "du") || !strcmp(cmd, "edit") || !strcmp(cmd, "e") || 
      !strcmp(cmd, "fill") || !strcmp(cmd, "f") || !strcmp(cmd, "reset") || !strcmp(cmd, "opcode") || 
      !strcmp(cmd, "opcodelist") || !strcmp(cmd, "assemble") || !strcmp(cmd, "type") || !strcmp(cmd, "symbol") ||
-     !strcmp(cmd, "loader") || !strcmp(cmd, "bp") || !strcmp(cmd, "run")) {
+     !strcmp(cmd, "progaddr") || !strcmp(cmd, "loader") || !strcmp(cmd, "bp") || !strcmp(cmd, "run")) {
       
      return FALSE;
   }
@@ -647,8 +647,102 @@ int check_fill(char* input, int opt_start, int* start, int* end, int* value,
   return TRUE;
 }
 
+/* Proj3 loader check */
 int check_loader(char* input, int opt_start, char* obj_1, char* obj_2, char* obj_3) {
+  int i = opt_start;
+
+  int f1s = NONE, f1e = NONE; //  obj_file 1 start, end index
+  int f2s = NONE, f2e = NONE; //  obj_file 2 start, end index 
+  int f3s = NONE, f3e = NONE; //  obj_file 3 start, end index
+
+  if(input[i] == '\0')  //  obj file 옵션 없이 loader일 경우
+    return FALSE;
+  else {  //  loader ...
+    i++;
+
+    for(; i < INPUT_LEN; i++) {
+      if(input[i] == '\0') {  //  입력 문장 끝에서
+        if(f1s == NONE) //  obj file이 하나도 없을 경우
+          return FALSE;
+        else if(f1s != NONE && f1e == NONE) //  obj file이 하나 있을 경우
+          f1e = i - 1;
+        else if(f1s != NONE && f1e != NONE && f2s != NONE && f2e == NONE) //  obj file이 두 개 있을 경우
+          f2e = i - 1;
+        else if(f1s != NONE && f1e != NONE && f2s != NONE && f2e != NONE
+                && f3s != NONE && f3e == NONE) // obj file이 세 개 있을 경우
+          f3e = i - 1;
+        else {
+          printf("Something was wrong in check_loader function\n");
+          return FALSE;
+        }
+
+        break;
+      } //  if '\0' end
+
+      if(f1s == NONE && input[i] != ' ' && input[i] != '\t') // obj_f1 시작 부분 발견
+        f1s = i;
+
+      else if(f1s != NONE && f1e == NONE) { //  obj_f1 끝 부분 찾는 중
+        if(input[i] == ' ' || input[i] == '\t') //  obj_f1 끝 부분 발견
+          f1e = i - 1;
+      }
+
+      else if(f1e != NONE && f2s == NONE) { //  obj_f2 시작 부분 찾는 중
+        if(input[i] != ' ' && input[i] != '\t') //  obj_f2 시작 부분 발견
+          f2s = i;
+      }
+
+      else if(f2s != NONE && f2e == NONE) { //  obj_f2 끝 부분 찾는 중
+        if(input[i] == ' ' || input[i] == '\t') //  obj_f2 끝 부분 발견
+          f2e = i - 1;
+      }
+
+      else if(f2e != NONE && f3s == NONE) { //  obj_f3 시작 부분 찾는 중
+        if(input[i] != ' ' && input[i] != '\t') //  obj_f3 시작 부분 발견
+          f3s = i;
+      }
+
+      else if(f3s != NONE && f3e == NONE) { //  obj_f3 끝 부분 찾는 중
+        if(input[i] == ' ' || input[i] == '\t') //  obj_f3 끝 부분 발견
+          f3e = i - 1;
+      }
+
+      else if(f3e != NONE) { //  3개의 obj file 찾은 후
+        if(input[i] != ' ' && input[i] != '\t') { //  불필요한 옵션 존재
+          printf("Object file 개수 3개 초과!\n");
+          return FALSE;
+        }
+      }
+    } //  for end
+  } //  else loader end
+
+  if(f1s == NONE || f1e == NONE) {
+    printf("Object file이 하나도 존재하지 않음!\n");
+    printf("Something was wrong in check_loader function\n");
+    return FALSE;
+  }
+
+  printf("f1s = %d, f1e = %d\n", f1s, f1e);
+  printf("f2s = %d, f2e = %d\n", f2s, f2e);
+  printf("f3s = %d, f3e = %d\n", f3s, f3e);
   
+  for(i = f1s; i <= f1e; i++)
+    obj_1[i - f1s] = input[i];
+  obj_1[i - f1s] = '\0';
+
+  if(f2s != NONE && f2e != NONE) {  //  두 번째 obj file이 존재할 경우
+    for(i = f2s; i <= f2e; i++)
+      obj_2[i - f2s] = input[i];
+    obj_2[i - f2s] = '\0';
+  }
+
+  if(f3s != NONE && f3e != NONE) {  //  세 번째 obj file이 존재할 경우
+    for(i = f3s; i <= f3e; i++)
+      obj_3[i - f3s] = input[i];
+    obj_3[i -f3s] = '\0';
+  }
+
+  return TRUE;
 }
 
 int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 수행 시 FALSE 반환(프로그램 종료)
@@ -668,6 +762,15 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
   FILE* fp_obj = NULL;  //  obj 파일 포인터
 
   char file_read[INPUT_LEN];
+
+  /* Proj3 추가 변수 */
+  //  progaddr 명령의 인자인 프로그램 시작 주소
+  char prog_addr[SYMBOL_SIZE] = {0, };
+
+  //  loader 명령의 인자인 object file 이름(최대 3개)
+  char obj_f1[FILENAME] = {0, };
+  char obj_f2[FILENAME] = {0, };
+  char obj_f3[FILENAME] = {0, };
  
   //  q[uit]
   if(!strcmp(cmd, "quit") || !strcmp(cmd, "q")) {
@@ -959,6 +1062,32 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     fclose(fp);
     fp = NULL;
     sprintf(queue_input, "%s %s", cmd, filename);
+    enqueue(queue_input);
+  }
+
+  /* Proj3 추가 */
+  //  progaddr
+  else if(!strcmp(cmd, "progaddr")) {
+    //
+    printf("progaddr 명령은 구현 중\n");
+    //
+    enqueue(queue_input);
+  }
+
+  //  loader
+  else if(!strcmp(cmd, "loader")) {
+    if(!check_loader(input, opt_start, obj_f1, obj_f2, obj_f3)) {
+      printf("유효하지 않은 loader 명령\n");
+      return TRUE;
+    }
+    //
+    printf("loader 명령은 구현 중\n");
+    //
+    printf("obj_f1 : %s\n", obj_f1);
+    printf("obj_f2 : %s\n", obj_f2);
+    printf("obj_f3 : %s\n", obj_f3);
+    //
+    sprintf(queue_input, "%s %s %s %s", cmd, obj_f1, obj_f2, obj_f3);
     enqueue(queue_input);
   }
 

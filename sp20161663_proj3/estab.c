@@ -12,7 +12,7 @@ EstabNode* allocESTAB(char* sym_name, int sym_addr, int length) {
   strcpy(node->symbol_name, sym_name);
   node->symbol_addr = sym_addr;
   node->length = length;
-  node->is_sect = node->length == NONE ? FALSE : TRUE;
+  node->is_csect = node->length == NONE ? FALSE : TRUE;
   //  legnth가 NONE일 경우 CSECT Name 아님.
 
   node->prev = NULL;
@@ -94,7 +94,7 @@ int find_sym_addr(char* sym_name, int* addr) {
   EstabNode* cur = est_head[idx];
 
   for(; cur; cur = cur->next) {
-    if(!strcmp(cur->sym_name, sym_name)) {
+    if(!strcmp(cur->symbol_name, sym_name)) {
       *addr = cur->symbol_addr;
       return TRUE;
     }
@@ -132,7 +132,7 @@ void print_loadmap() {
   for(i = 0; i < est_num; i++) {
     if(load_map[i].is_csect) {  //  control_section 이름일 경우
       strcpy(output, load_map[i].symbol_name);
-      dec_to_hex(load_map[i].addr, hex, 5);
+      dec_to_hex(load_map[i].symbol_addr, hex, 5);
       strcat(output, "\t\t");
       strcat(output, hex);
       dec_to_hex(load_map[i].length, hex, 5);
@@ -143,11 +143,11 @@ void print_loadmap() {
       strcpy(output, "\t");
       strcat(output, load_map[i].symbol_name);
       strcat(output, "\t");
-      dec_to_hex(load_map[i].addr, hex, 5);
+      dec_to_hex(load_map[i].symbol_addr, hex, 5);
       strcat(output, hex);
     }
     fputs(output, stdout);
-    puts();
+    printf("\n");
   }
 
   printf("--------------------------------\n");
@@ -167,7 +167,7 @@ void delete_estable() {
       free(del);
       del = est_head[i];
     }
-    est_head[i];
+    est_head[i] = NULL;
   }
   est_num = 0;
 }
