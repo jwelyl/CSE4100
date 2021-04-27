@@ -4,6 +4,8 @@
 #include "optable.h"
 #include "symtable.h"
 #include "assemble.h"
+#include "estab.h"
+#include "link_loader.h"
 
 int address = 0;
 int assembled = FALSE;         // 가장 최근 assemble 명령이 성공 시 TRUE, 실패 시 FALSE
@@ -1124,10 +1126,6 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       printf("유효하지 않은 progaddr 명령\n");
       return TRUE;
     }
-    
-    //
-    printf("progaddr : %s\n", prog_addr);
-    //
 
     //  int로 변환
     for(i = strlen(prog_addr) - 1; i >= 0; i--) {
@@ -1145,14 +1143,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       num *= 16;
     }
 
-    //
-    printf("progaddr : %d(%#X)\n", addr, addr);
-    //
-
-    //
-    printf("progaddr 명령은 구현 중\n");
-    //
-
+    set_progaddr(addr);
     sprintf(queue_input, "%s %s", cmd, prog_addr);
     enqueue(queue_input);
   }
