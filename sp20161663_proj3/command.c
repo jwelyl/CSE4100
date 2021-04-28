@@ -1157,11 +1157,6 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       printf("유효하지 않은 loader 명령\n");
       return TRUE;
     }
-    //
-    printf("obj_f1 : %s\n", obj_f1);
-    printf("obj_f2 : %s\n", obj_f2);
-    printf("obj_f3 : %s\n", obj_f3);
-    //
    
     if(strlen(obj_f1) < 5) {
       printf("첫 번째 object file 명이 유효하지 않음.\n");
@@ -1224,7 +1219,19 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       }
     }
 
-    loader_pass1(&fp_obj1, &fp_obj2, &fp_obj3);
+    if(!loader_pass1(fp_obj1, fp_obj2, fp_obj3)) return TRUE; //  pass 1 수행, 실패할 경우 loader 종료
+    
+    //  pass 1 끝난 후 pass 2를 위해 파일 닫기
+    if(fp_obj1) fclose(fp_obj1);
+    if(fp_obj2) fclose(fp_obj2);
+    if(fp_obj3) fclose(fp_obj3);
+    
+    //  pass 2를 위한 파일 열기(pass 1 이전에 파일 검사를 했으므로 또 할 필요 없음)
+    fp_obj1 = fopen(obj_f1, "r");
+    fp_obj2 = fopen(obj_f2, "r");
+    fp_obj3 = fopen(obj_f3, "r");
+
+    if(!loader_pass2(fp_obj1, fp_obj2, fp_obj3)) return TRUE;
 
     //
     printf("loader 명령은 구현 중\n");

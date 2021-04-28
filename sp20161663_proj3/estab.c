@@ -83,6 +83,21 @@ int push_est_node(char* sym_name, int sym_addr, int length) {
   return FALSE;
 } //  push end
 
+//  symbol이 이미 존재하는지 확인하는 함수
+int find_symbol(char* sym_name) {
+  int idx = est_hash_function(sym_name);
+  if(idx == NONE) return FALSE; //  유효하지 않은 SYMBOL
+
+  EstabNode* cur = est_head[idx];
+
+  for(; cur; cur = cur->next) {
+    if(!strcmp(cur->symbol_name, sym_name))
+      return TRUE;
+  }
+
+  return FALSE;
+}
+
 //  symbol의 주소를 찾는 함수
 int find_sym_addr(char* sym_name, int* addr) {
   int idx = est_hash_function(sym_name);

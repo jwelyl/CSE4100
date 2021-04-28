@@ -14,6 +14,7 @@ typedef struct estab_node {
 
 EstabNode* allocESTAB(char* sym_name, int sym_addr, int length);
 int push_est_node(char* sym_name, int sym_addr, int length);
+int find_symbol(char* sym_name);
 int find_sym_addr(char* sym_name, int* addr);
 int est_hash_function(char* sym_name);
 void print_loadmap();

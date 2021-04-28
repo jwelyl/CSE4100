@@ -70,6 +70,6 @@
 #define SYMBOL_SIZE        7    //  SYMBOL 이름, 주소 크기(6)
 #define STMBOL_REFN        3    //  SYMBOL REFERENCE NUMBER 크기(3)
 #define ESTAB_SIZE        13    //  최대 ESTAB SIZE(Hash Table) 
-#define REFERENCE_N      100    //  최대 reference 개수
+#define REFERENCE_N       14    //  최대 reference 개수
 
 #endif
