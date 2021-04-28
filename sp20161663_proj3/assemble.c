@@ -40,7 +40,7 @@ int operand_to_dec() {  //  필요할 경우 10진수 배열을 10진수로 정�
 
 int hex_to_dec(char* hex, int* dec) {  // 16진수를 10진수로 변경 
   //  16진수를 10진수로 변환 성공 시 TRUE, 실패 시 FALSE 반환
-  int i = strlen(hex) - 2;
+  int i = strlen(hex) - 1;
   int mult = 1;
   
   *dec = 0;

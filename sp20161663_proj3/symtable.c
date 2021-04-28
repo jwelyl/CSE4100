@@ -136,7 +136,7 @@ int st_hash_function(char* label) {
         
   int idx;
 
-  if('A' <= label[0] && label[0] <= 'z')
+  if('A' <= label[0] && label[0] <= 'Z')
     idx = (label[0] - 'A') / 2;
   else if('a' <= label[0] && label[0] <= 'z') 
     idx = (label[0] - 'a') / 2;

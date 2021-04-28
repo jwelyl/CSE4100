@@ -26,7 +26,7 @@ int push_est_node(char* sym_name, int sym_addr, int length) {
   int idx = est_hash_function(sym_name);
   EstabNode* node = allocESTAB(sym_name, sym_addr, length);
   EstabNode* cur = est_head[idx];
-  
+
   if(length != NONE)
     total_length += length;
 
@@ -122,8 +122,7 @@ int est_hash_function(char* sym_name) {
 //  loadmap 출력
 void print_loadmap() {
   int i;
-  char hex[5];
-  char output[INPUT_LEN] = {0, };
+  char hex_addr[5], hex_len[5];
 
   printf("control symbol address length\n");
   printf("section name\n");
@@ -131,29 +130,21 @@ void print_loadmap() {
   
   for(i = 0; i < est_num; i++) {
     if(load_map[i].is_csect) {  //  control_section 이름일 경우
-      strcpy(output, load_map[i].symbol_name);
-      dec_to_hex(load_map[i].symbol_addr, hex, 5);
-      strcat(output, "\t\t");
-      strcat(output, hex);
-      dec_to_hex(load_map[i].length, hex, 5);
-      strcat(output, "\t");
-      strcat(output, hex);
+      dec_to_hex(load_map[i].symbol_addr, hex_addr, 5);
+      dec_to_hex(load_map[i].length, hex_len, 5);
+      printf("%-6s           %s   %s", load_map[i].symbol_name, hex_addr, hex_len);
     }
     else {  //  control_section이 아닐경우
-      strcpy(output, "\t");
-      strcat(output, load_map[i].symbol_name);
-      strcat(output, "\t");
-      dec_to_hex(load_map[i].symbol_addr, hex, 5);
-      strcat(output, hex);
+      dec_to_hex(load_map[i].symbol_addr, hex_addr, 5);
+      printf("        %6s   %s", load_map[i].symbol_name, hex_addr);
     }
-    fputs(output, stdout);
     printf("\n");
   }
 
   printf("--------------------------------\n");
 
-  dec_to_hex(total_length, hex, 5);
-  printf("\t\ttotal length %s\n", hex); //  프로그램 길이 출력
+  dec_to_hex(total_length, hex_len, 5);
+  printf("           total length %s\n", hex_len); //  프로그램 길이 출력
 }
 
 //  load 과정이 끝난 후 hash table 해제
@@ -170,5 +161,6 @@ void delete_estable() {
     est_head[i] = NULL;
   }
   est_num = 0;
+  total_length = 0;
 }
 

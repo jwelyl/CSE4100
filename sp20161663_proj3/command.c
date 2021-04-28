@@ -1224,6 +1224,8 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       }
     }
 
+    loader_pass1(&fp_obj1, &fp_obj2, &fp_obj3);
+
     //
     printf("loader 명령은 구현 중\n");
     //
@@ -1231,6 +1233,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     if(fp_obj1) fclose(fp_obj1);
     if(fp_obj2) fclose(fp_obj2);
     if(fp_obj3) fclose(fp_obj3);
+    delete_estable();
     sprintf(queue_input, "%s %s %s %s", cmd, obj_f1, obj_f2, obj_f3);
     enqueue(queue_input);
   }
