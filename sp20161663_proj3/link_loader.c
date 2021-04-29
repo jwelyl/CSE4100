@@ -10,6 +10,30 @@ void set_progaddr(int prog_addr) {
   progaddr = prog_addr;
 }
 
+int hex_ref_to_dec(char* hex_ref, int* ref_num) {
+  if('0' <= hex_ref[1] && hex_ref[1] <= '9')
+    *ref_num = hex_ref[1] - '0';
+  else if('A' <= hex_ref[1] && hex_ref[1] <= 'F')
+    *ref_num = hex_ref[1] - 'A' + 10;
+  else if('a' <= hex_ref[1] && hex_ref[1] <= 'f')
+    *ref_num = hex_ref[1] - 'a' + 10;
+  else {
+    printf("잘못된 reference number.\n");
+    return FALSE;
+  }
+  if('0' <= hex_ref[0] && hex_ref[0] <= '9')
+    *ref_num += ((hex_ref[0] - '0') * 16);
+  else if('A' <= hex_ref[0] && hex_ref[0] <= 'F')
+    *ref_num += ((hex_ref[0] - 'a' + 10) * 16);
+  else if('a' <= hex_ref[0] && hex_ref[0] <= 'f')
+    *ref_num += ((hex_ref[0] - 'a' + 10) * 16);
+  else {
+    printf("잘못된 reference number.\n");
+    return FALSE;
+  }
+  return TRUE;
+}
+
 int loader_pass1(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
   char input[INPUT_LEN];
   int i, j, k;
@@ -95,6 +119,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
   char* reference[REFERENCE_N];      //  reference를 번호에 맞게 저장할 배열
                                      //  index : reference 번호(ex. reference[2] : 02 reference)
   char temp[SYMBOL_SIZE];
+  char hex[3];  //  2 digit 16진수 reference number
 
   for(i = 0; i < REFERENCE_N; i++)
     reference[i] = (char*)malloc(sizeof(char) * SYMBOL_SIZE);
@@ -131,9 +156,15 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
           // 10진수라 가정
           if(8 * j + 1 > strlen(input) - 1)  //  더 이상 reference가 없을 경우
             break;
-                
-          ref_num = input[8 * j + 2] - '0';
-          ref_num += ((input[8 * j + 1] - '0') * 10);
+          
+          hex[0] = input[8 * j + 1];
+          hex[1] = input[8 * j + 2];
+          hex[2] = '\0';
+
+          if(!hex_ref_to_dec(hex, &ref_num) || ref_num >= 14) {
+            printf("Reference 번호 오류\n");
+            return FALSE;
+          } 
 
           for(k = 8 * j + 3; k <= 8 * j + 8; k++) { //  reference를 해당 번호에 복사
             if(input[k] == ' ' || input[k] == '\0') break;
@@ -158,28 +189,3 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
 
   return TRUE;
 }
-
- /*
-          // 16진수라 가정
-          if('0' <= input[8 * j + 2] && input[8 * j + 2] <= '9')
-            ref_num = input[8 * j + 2] - '0';
-          else if('A' <= input[8 * j + 2] && input[8 * j + 2] <= 'F')
-            ref_num = input[8 * j + 2] - 'A' + 10;
-          else if('a' <= input[8 * j + 2] && input[8 * j + 2] <= 'f')
-            ref_num = input[8 * j + 2] - 'a' + 10;
-          else {
-            printf("잘못된 reference number.\n");
-            return FALSE;
-          }
-          if('0' <= input[8 * j + 1] && input[8 * j + 1] <= '9')
-            ref_num += ((input[8 * j + 1] - '0') * 16);
-          else if('A' <= input[8 * j + 1] && input[8 * j + 1] <= 'F')
-            ref_num += ((input[8 * j + 1] - 'a' + 10) * 16);
-          else if('a' <= input[8 * j + 1] && input[8 * j + 1] <= 'f')
-            ref_num += ((input[8 * j + 1] - 'a' + 10) * 16);
-          else {
-            printf("잘못된 reference number.\n");
-            return FALSE;
-          }
-        */
-
