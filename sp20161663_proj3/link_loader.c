@@ -178,10 +178,16 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
   int add, len, start, mod, cur;
   char op;
 
+  //
+  int m_num;
+  //
+
   for(i = 0; i < REFERENCE_N; i++)
     reference[i] = (char*)malloc(sizeof(char) * SYMBOL_SIZE);
   
   for(i = 0; i < 3; i++) {  //  최대 3개의 object file
+    m_num = 0;
+
     fp = (i % 3 == 0) ? fp_obj1 : ((i % 3 == 1 ? fp_obj2 : fp_obj3));
     if(!fp) break;  //  첫 번째 파일부터 순서대로 확인, fp가 NULL일 경우 file이 없으므로 break
  
@@ -286,9 +292,9 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
 
       else if(input[0] == 'M') {  //  modification record일 경우
         //  modification 위치 결정
-        int ref_num;
+        int ref_num, addr;
         char c[3];
-        char temp5[6], temp6[7];  //  각각 modification 길이가 5, 6일 때 사용될 배열
+        char temp5[6], temp6[7];   //  modification 길이가 각각 5, 6일때 사용
         char temp8[9];            //  sprintf 위한 배열
 
         for(j = 1; j <= 6; j++) 
@@ -310,6 +316,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         hex_ref_to_dec(hex, &ref_num);
 
         //
+        /*
         printf("\n");
         printf("modification pos : %d(%#X)\n", mod, mod);
         printf("modification length : %d(%#X)\n", len, len);
@@ -317,21 +324,98 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         printf("reference number : %d(%#X)\n", ref_num, ref_num);
         printf("reference : %s\n", reference[ref_num]);
         printf("\n");
+        */
         //
 
         mod += csaddr;  //  실제로 수정할 위치
+//        printf("수정 위치 : %#X\n", mod);
+
+        for(k = 0; k < 3; k++) {
+          c[k] = memory[mod + k];
+          sprintf(temp8, "%8X", c[k]);
+          temp[2 * k] = temp8[6];
+          temp[2 * k + 1] = temp8[7];
+        }
+        temp[6] = '\0';
+        
+        for(k = 0; k < 6; k++) {  //  빈 자리 0으로 채우기
+          if(temp[k] == ' ')
+            temp[k] = '0';
+        }
+
+        printf("\n%d번째 modification", (m_num++) + 1);
+
         if(len == 6) {
-          for(k = 0; k < 3; k++) {
-            c[k] = memory[mod + k];
-            sprintf(temp8, "%8X", c[k]);
-            temp[2 * k] = temp8[6];
-            temp[2 * k + 1] = temp8[7];
-          }
-          temp[6] = '\0';
+          for(k = 0; k < 6; k++)
+            temp6[k] = temp[k];
+          temp6[k] = '\0';
+
+          //
+          printf("\n길이 6\n");
+          printf("수정할 6개 부분 : %s\n", temp6);
+          printf("\n6end\n");
+          //
+
+          if(('8' <= temp6[0] && temp6[0] <= '9') || ('A' <= temp6[0] && temp6[0] <= 'F') ||
+             ('a' <= temp6[0] && temp6[0] <= 'f'))  //  수정할 부분이 음수일 경우
+            neg_hex_to_dec(temp6, 6, &addr);
+          else
+            hex_to_dec(temp6, &addr); 
+          printf("수정할 6개 부분 10진수 변환 : %d(%X)\n", addr, addr);
 
         }
         else if(len == 5) {
-        
+          for(k = 0; k < 5; k++)
+            temp5[k] = temp[k + 1];
+          temp5[k] = '\0';
+
+          //
+          printf("\n길이 5\n");
+          printf("수정할 5개 부분 : %s\n", temp5);
+          printf("\n5end\n");
+          //
+          
+          if(('8' <= temp5[0] && temp5[0] <= '9') || ('A' <= temp5[0] && temp5[0] <= 'F') ||
+             ('a' <= temp5[0] && temp5[0] <= 'f'))  //  수정할 부분이 음수일 경우
+            neg_hex_to_dec(temp5, 6, &addr);
+          else 
+            hex_to_dec(temp5, &addr); 
+          printf("수정할 5개 부분 10진수 변환 : %d(%X)\n", addr, addr);
+        }
+
+        find_sym_addr(reference[ref_num], &add);
+        if(op == '+') addr += add;
+        else if(op == '-') addr -= add;
+        printf("수정된 후 10진수 변환 : %d(%X)\n", addr, addr);
+
+        sprintf(temp8, "%8X", addr);
+        for(k = 0; k < 8; k++) {  //  빈 공간 채우기
+          if(temp8[k] == ' ')
+            temp8[k] = '0';
+        }
+        if(len == 5) {
+          for(k = 1; k < 6; k++)
+            temp[k] = temp8[k + 2];
+        }
+        else if(len == 6) {
+          for(k = 0; k < 6; k++)
+            temp[k] = temp8[k + 2];
+        } 
+        printf("수정된 후 temp : %s\n", temp);
+
+        for(k = 0; k < 3; k++) {
+          int renew;  //  갱신된 메모리 값
+          hex[0] = temp[2 * k];
+          hex[1] = temp[2 * k + 1];
+          hex[2] = '\0';
+
+          if(('8' <= hex[0] && hex[0] <= '9') || ('A' <= hex[0] && hex[0] <= 'F') ||
+             ('a' <= hex[0] && hex[0] <= 'f')) {  //  메모리 값이 음수일 경우
+            neg_hex_to_dec(hex, 2, &renew); 
+          }
+          else
+            hex_to_dec(hex, &renew);
+          memory[mod + k] = renew;  //  메모리에 값 갱신
         }
       } //  Modification record end
     } //  while end
