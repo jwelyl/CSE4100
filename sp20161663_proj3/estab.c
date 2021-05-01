@@ -8,6 +8,8 @@ int est_num = 0;      //  estable에 삽입된 symbol 개수
 int total_length = 0; //  program 총 길이
 
 EstabNode* allocESTAB(char* sym_name, int sym_addr, int length) {
+  //  external symbol table(hash table) 노드 할당 함수
+
   EstabNode* node = (EstabNode*)malloc(sizeof(EstabNode));
   strcpy(node->symbol_name, sym_name);
   node->symbol_addr = sym_addr;

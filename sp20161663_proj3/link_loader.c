@@ -90,6 +90,8 @@ int neg_hex_to_dec(char* neg, int len, int* dec) {
 }
 
 int loader_pass1(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
+  //  loading 과정에서 pass 1을 수행하는 함수
+  //  H 레코드와 D 레코드(존재할 경우)를 확인해서 External Symbol Table을 만든다.
   char input[INPUT_LEN];
   int i, j, k;
   FILE* fp;
@@ -164,6 +166,9 @@ int loader_pass1(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
 }
 
 int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
+  //  실질적인 loading인 pass 2를 수행하는 함수
+  //  R 레코드를 확인(존재할 경우)해 외부 심볼을 찾고 T 레코드를 확인해 메모리에 적재함
+  //  M 레코드가 존재할 경우 relocation 수행
   char input[INPUT_LEN];
   int i, j, k;
   FILE* fp;
@@ -172,10 +177,10 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
                                      //  index : reference 번호(ex. reference[2] : 02 reference)
   char temp[SYMBOL_SIZE];
   char hex[3];  //  2 digit 16진수 reference number, length, 등등
-  int add, len, start, mod, cur;
-  char op;
+  int add, len, mod, cur;
+  char op;  //  external symbol과의 연산자(+ or -)
 
-  for(i = 0; i < REFERENCE_N; i++)
+  for(i = 0; i < REFERENCE_N; i++)  //  reference table 동적 할당
     reference[i] = (char*)malloc(sizeof(char) * SYMBOL_SIZE);
   
   for(i = 0; i < 3; i++) {  //  최대 3개의 object file
@@ -193,7 +198,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         }
         symbol[j - 1] = '\0';
       
-        if(!find_sym_addr(symbol, &csaddr)) {
+        if(!find_sym_addr(symbol, &csaddr)) { //  symbol에 해당하는 주소 찾기
           printf("존재하지 않는 symbol\n");
           return FALSE;
         }
@@ -231,7 +236,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         for(j = 1; j <= 6; j++)
           temp[j - 1] = input[j];
         temp[j - 1] = '\0';
-        hex_to_dec(temp, &add);
+        hex_to_dec(temp, &add); 
         
         //  text record 길이 결정
         hex[0] = input[7];
@@ -239,15 +244,14 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         hex[2] = '\0';
         hex_ref_to_dec(hex, &len);
 
-        start = csaddr + add;
-        cur = start;
+        cur = csaddr + add; 
 
         if(len > 30) {
           printf("Text record length error!\n");
           return FALSE;
         }
 
-        for(j = 9; j <= 67; j += 2) {
+        for(j = 9; j <= 67; j += 2) { //  메모리에 적재
           int dec;  //  16진수 문자열(1bit)을 정수로 변환
 
           if(j >= 9 + len * 2) break;
@@ -258,7 +262,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
           if(('8' <= hex[0] && hex[0] <= '9') || ('A' <= hex[0] && hex[0] <= 'F') ||
             ('a' <= hex[0] && hex[0] <= 'f')) { //  해당 값이 음수일 경우
             
-            if(!neg_hex_to_dec(hex, 2, &dec)) {
+            if(!neg_hex_to_dec(hex, 2, &dec)) { //  음수 16진수 문자열을 정수로 변환
               printf("pass2 과정에서 음수 변환 실패\n");
               return FALSE;
             }
@@ -305,7 +309,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         mod += csaddr;  //  실제로 수정할 위치
 
         for(k = 0; k < 3; k++) {
-          c[k] = memory[mod + k];
+          c[k] = memory[mod + k]; //  메모리에 저장된 값을 수정하기 위해 배열에 저장
           sprintf(temp8, "%8X", c[k]);
           temp[2 * k] = temp8[6];
           temp[2 * k + 1] = temp8[7];
@@ -317,8 +321,8 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
             temp[k] = '0';
         }
 
-        if(len == 6) {
-          for(k = 0; k < 6; k++)
+        if(len == 6) {  //  길이가 6인 경우
+          for(k = 0; k < 6; k++)  
             temp6[k] = temp[k];
           temp6[k] = '\0';
 
@@ -326,9 +330,9 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
              ('a' <= temp6[0] && temp6[0] <= 'f'))  //  수정할 부분이 음수일 경우
             neg_hex_to_dec(temp6, 6, &addr);
           else
-            hex_to_dec(temp6, &addr); 
+            hex_to_dec(temp6, &addr);   //  계산을 위해 16진수 문자열을 정수로 변환
         }
-        else if(len == 5) {
+        else if(len == 5) { //  길이가 5인 경우
           for(k = 0; k < 5; k++)
             temp5[k] = temp[k + 1];
           temp5[k] = '\0';
@@ -359,7 +363,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         } 
 
         for(k = 0; k < 3; k++) {
-          int renew;  //  갱신된 메모리 값
+          int renew;  //  갱신될 메모리 값
           hex[0] = temp[2 * k];
           hex[1] = temp[2 * k + 1];
           hex[2] = '\0';
@@ -376,11 +380,11 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
     } //  while end
   } //  for three file end
   
-  for(i = 0; i < REFERENCE_N; i++) {
+  for(i = 0; i < REFERENCE_N; i++) {  //  reference table 해제
     free(reference[i]);
     reference[i] = NULL;
   }
-  print_loadmap();
+  print_loadmap();  //  loadmap 출력
 
   return TRUE;
 }
