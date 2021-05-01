@@ -43,7 +43,7 @@ int neg_hex_to_dec(char* neg, int len, int* dec) {
   //  2's complement를 이용하여 음수 16진수 문자열을 10진수 음수로 변환
   //  neg가 음수이므로 가장 앞자리인 neg[0]는 '8' ~ 'F'임(8, 9, A, B, C, D, E, F)
   int i, idx, num = 16; 
-  
+
   if('8' <= neg[0] && neg[0] <= '9') idx = neg[0] - '0'; 
   else if('A' <= neg[0] && neg[0] <= 'F') idx = neg[0] - 'A' + 10;
   else if('a' <= neg[0] && neg[0] <= 'f') idx = neg[0] - 'a' + 10;
@@ -77,7 +77,7 @@ int neg_hex_to_dec(char* neg, int len, int* dec) {
       if('0' <= neg[i] && neg[i] <= '9')
         *dec += ((neg[i] - '0') * num);
       else if('A' <= neg[i] && neg[i] <= 'F')
-        *dec += ((neg[len - 1] - 'A' + 10) * num);
+        *dec += ((neg[i] - 'A' + 10) * num);
       else if('a' <= neg[i] && neg[i] <= 'f')
         *dec += ((neg[i] - 'a' + 10) * num);
       num *= 16;
@@ -160,9 +160,6 @@ int loader_pass1(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
     } //  while end
   } //  for 3 file end
 
-  //
-  print_loadmap();
-  //
   return TRUE; 
 }
 
@@ -178,16 +175,10 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
   int add, len, start, mod, cur;
   char op;
 
-  //
-  int m_num;
-  //
-
   for(i = 0; i < REFERENCE_N; i++)
     reference[i] = (char*)malloc(sizeof(char) * SYMBOL_SIZE);
   
   for(i = 0; i < 3; i++) {  //  최대 3개의 object file
-    m_num = 0;
-
     fp = (i % 3 == 0) ? fp_obj1 : ((i % 3 == 1 ? fp_obj2 : fp_obj3));
     if(!fp) break;  //  첫 번째 파일부터 순서대로 확인, fp가 NULL일 경우 file이 없으므로 break
  
@@ -207,9 +198,6 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
           return FALSE;
         }
         strcpy(reference[1], symbol);
-        //
-        printf("%d CSECT : %s\n  ADDRESS : %X\n", i + 1, symbol, csaddr);
-        //
       } //  H record end
 
       else if(input[0] == 'R') {  //  reference record일 경우
@@ -314,21 +302,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
           hex[j - 10] = input[j];
         hex[j - 10] = '\0';
         hex_ref_to_dec(hex, &ref_num);
-
-        //
-        /*
-        printf("\n");
-        printf("modification pos : %d(%#X)\n", mod, mod);
-        printf("modification length : %d(%#X)\n", len, len);
-        printf("operation : %c\n", op);
-        printf("reference number : %d(%#X)\n", ref_num, ref_num);
-        printf("reference : %s\n", reference[ref_num]);
-        printf("\n");
-        */
-        //
-
         mod += csaddr;  //  실제로 수정할 위치
-//        printf("수정 위치 : %#X\n", mod);
 
         for(k = 0; k < 3; k++) {
           c[k] = memory[mod + k];
@@ -343,50 +317,32 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
             temp[k] = '0';
         }
 
-        printf("\n%d번째 modification", (m_num++) + 1);
-
         if(len == 6) {
           for(k = 0; k < 6; k++)
             temp6[k] = temp[k];
           temp6[k] = '\0';
-
-          //
-          printf("\n길이 6\n");
-          printf("수정할 6개 부분 : %s\n", temp6);
-          printf("\n6end\n");
-          //
 
           if(('8' <= temp6[0] && temp6[0] <= '9') || ('A' <= temp6[0] && temp6[0] <= 'F') ||
              ('a' <= temp6[0] && temp6[0] <= 'f'))  //  수정할 부분이 음수일 경우
             neg_hex_to_dec(temp6, 6, &addr);
           else
             hex_to_dec(temp6, &addr); 
-          printf("수정할 6개 부분 10진수 변환 : %d(%X)\n", addr, addr);
-
         }
         else if(len == 5) {
           for(k = 0; k < 5; k++)
             temp5[k] = temp[k + 1];
           temp5[k] = '\0';
-
-          //
-          printf("\n길이 5\n");
-          printf("수정할 5개 부분 : %s\n", temp5);
-          printf("\n5end\n");
-          //
           
           if(('8' <= temp5[0] && temp5[0] <= '9') || ('A' <= temp5[0] && temp5[0] <= 'F') ||
              ('a' <= temp5[0] && temp5[0] <= 'f'))  //  수정할 부분이 음수일 경우
             neg_hex_to_dec(temp5, 6, &addr);
           else 
             hex_to_dec(temp5, &addr); 
-          printf("수정할 5개 부분 10진수 변환 : %d(%X)\n", addr, addr);
         }
 
         find_sym_addr(reference[ref_num], &add);
         if(op == '+') addr += add;
         else if(op == '-') addr -= add;
-        printf("수정된 후 10진수 변환 : %d(%X)\n", addr, addr);
 
         sprintf(temp8, "%8X", addr);
         for(k = 0; k < 8; k++) {  //  빈 공간 채우기
@@ -401,7 +357,6 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
           for(k = 0; k < 6; k++)
             temp[k] = temp8[k + 2];
         } 
-        printf("수정된 후 temp : %s\n", temp);
 
         for(k = 0; k < 3; k++) {
           int renew;  //  갱신된 메모리 값
@@ -425,6 +380,7 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
     free(reference[i]);
     reference[i] = NULL;
   }
+  print_loadmap();
 
   return TRUE;
 }

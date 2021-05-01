@@ -859,7 +859,7 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     printf("\nbp [address]");
     printf("\nbp clear");
     printf("\nbp");
-    printf("\nrun");
+    printf("\nrun\n");
     
     enqueue(cmd);
   }
@@ -1232,10 +1232,6 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     fp_obj3 = fopen(obj_f3, "r");
 
     if(!loader_pass2(fp_obj1, fp_obj2, fp_obj3)) return TRUE;
-
-    //
-    printf("loader 명령은 구현 중\n");
-    //
 
     if(fp_obj1) fclose(fp_obj1);
     if(fp_obj2) fclose(fp_obj2);
