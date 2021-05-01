@@ -435,3 +435,6 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
   return TRUE;
 }
 
+void run() {  //  run 구현 함수
+
+}

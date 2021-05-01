@@ -1299,30 +1299,46 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
 
     if(!loader_pass2(fp_obj1, fp_obj2, fp_obj3)) return TRUE;
 
+    //  load 완료 후 열려있는 모든 파일 닫기
     if(fp_obj1) fclose(fp_obj1);
     if(fp_obj2) fclose(fp_obj2);
     if(fp_obj3) fclose(fp_obj3);
+
+    //  external symbol table 해제
     delete_estable();
     sprintf(queue_input, "%s %s %s %s", cmd, obj_f1, obj_f2, obj_f3);
     enqueue(queue_input);
   }
 
+  //  bp
   else if(!strcmp(cmd, "bp")) {
-    char bpc[6] = {0, };
+    char bpc[6] = {0, };  //  option 저장
 
     if(!check_bp(input, opt_start, &breakpoint, bpc)) {
+      //  불필요한 option, 범위 초과, 16진수가 아닐 경우 등 유효하지 않을 경우
       printf("유효하지 않은 bp 명령\n");
       return TRUE;
     }
-    if(breakpoint == -1) 
+    if(breakpoint == -1) // bp만 입력했을 경우
       show_all_bps();
-    else if(breakpoint == -2) 
+    else if(breakpoint == -2) //  bp clear를 입력했을 경우
       clear_all_bps();
-    else 
+    else  //  그 외 breakpoint 설정했을 경우
       add_bp(breakpoint, bpc);
 
     sprintf(queue_input, "%s %s", cmd, bpc);
     enqueue(queue_input);
+  }
+
+  //  run
+  else if(!strcmp(cmd, "run")) {
+    if(!check_no_opt(input, opt_start)) {
+      printf("유효하지 않은 run 명령\n");
+      return TRUE;
+    }
+
+    run();
+    enqueue(cmd);
   }
 
   return TRUE;
