@@ -1,5 +1,7 @@
-# System Programming Project 1
+# System Programming Project 3 
 Implementation of shell, memory space, opcode table, and related commands
+Implementation of SIC/XE assembler
+Implementation of linking loader
 
 ## How to compile
 make
@@ -21,6 +23,10 @@ opcodelist : prints opcode hash table
 assemble filename : makes object file and listing file of filename
 type filename : prints contents of filename
 symbol : prints symbol table
+progaddr address: 
+loader object filename1 ... :
+bp : 
+run : 
 
 ### How to clean
 make clean

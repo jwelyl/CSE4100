@@ -5,7 +5,7 @@
 int main(void) {
   char* ptr[3];
   char str1[15] = "I am a boy.";
-  char str2[20] = "Sex is the best!";
+  char str2[20] = "S is the best!";
   char str3[30] = "I like it.";
   int i;
 

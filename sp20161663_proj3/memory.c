@@ -9,6 +9,7 @@ void reset_to_zero(char* hex, int len) {  //  배열을 16진수 0으로 초기�
 }
 
 void dec_to_hex(int dec, char* hex, int len) {  //  10진수를 16진수로 변경하여 배열에 저장
+                                                //  양수일 경우
   int i, r;
 
   reset_to_zero(hex, len);
@@ -26,6 +27,18 @@ void dec_to_hex(int dec, char* hex, int len) {  //  10진수를 16진수로 변�
     if(dec == 0) break;
     i--;
   }
+}
+
+//  Proj3 추가
+void dec_to_hex_neg(int dec, char* hex, int len) {  //  10진수를 16진수로 변경하여 배열에 저장
+                                                    //  음수일 경우
+  char temp[9];
+
+  reset_to_zero(hex, len);
+  
+  sprintf(temp, "%X", dec);
+  hex[0] = temp[6];
+  hex[1] = temp[7];
 }
 
 void reset_memory() { //  메모리 공간 전체를 0으로 변경
@@ -57,7 +70,10 @@ void dump_memory(int start, int end) {  //  메모리의 start번지부터 end �
         printf("   ");
   
       for(j = start; j <= end; j++) {
-        dec_to_hex(memory[j], hex_col, HEX_COL);  //  메모리에 저장된 값을 16진수로 변경
+        if(memory[j] >= 0)
+          dec_to_hex(memory[j], hex_col, HEX_COL);  //  메모리에 저장된 값을 16진수로 변경
+        else
+          dec_to_hex_neg(memory[j], hex_col, HEX_COL);  //  메모리에저장된 값을 16진수로 변경(음수)
         printf("%s ", hex_col);
       }
 
@@ -86,8 +102,14 @@ void dump_memory(int start, int end) {  //  메모리의 start번지부터 end �
         printf("   ");
   
       for(j = start; j <= addr_end; j++) {
-        dec_to_hex(memory[j], hex_col, HEX_COL);
+         if(memory[j] >= 0)
+          dec_to_hex(memory[j], hex_col, HEX_COL);  //  메모리에 저장된 값을 16진수로 변경
+        else
+          dec_to_hex_neg(memory[j], hex_col, HEX_COL);  //  메모리에저장된 값을 16진수로 변경(음수)
         printf("%s ", hex_col);
+
+//        dec_to_hex(memory[j], hex_col, HEX_COL);
+//        printf("%s ", hex_col);
       }
       printf("; ");
 
@@ -105,7 +127,12 @@ void dump_memory(int start, int end) {  //  메모리의 start번지부터 end �
 
     else if(i == end_line) {  //  마지막줄일 경우
       for(j = addr; j <= end; j++) {
-        dec_to_hex(memory[j], hex_col, HEX_COL);
+  //      dec_to_hex(memory[j], hex_col, HEX_COL);
+  //      printf("%s ", hex_col);
+        if(memory[j] >= 0)
+          dec_to_hex(memory[j], hex_col, HEX_COL);  //  메모리에 저장된 값을 16진수로 변경
+        else
+          dec_to_hex_neg(memory[j], hex_col, HEX_COL);  //  메모리에저장된 값을 16진수로 변경(음수)
         printf("%s ", hex_col);
       }
       for(j = end + 1; j <= addr_end; j++) 
@@ -126,7 +153,12 @@ void dump_memory(int start, int end) {  //  메모리의 start번지부터 end �
 
     else {  //  중간 줄일 경우
       for(j = addr; j <= addr_end; j++) {
-        dec_to_hex(memory[j], hex_col, HEX_COL);
+      //   dec_to_hex(memory[j], hex_col, HEX_COL);
+      //   printf("%s ", hex_col);
+        if(memory[j] >= 0)
+          dec_to_hex(memory[j], hex_col, HEX_COL);  //  메모리에 저장된 값을 16진수로 변경
+        else
+          dec_to_hex_neg(memory[j], hex_col, HEX_COL);  //  메모리에저장된 값을 16진수로 변경(음수)
         printf("%s ", hex_col);
       }
       printf("; ");

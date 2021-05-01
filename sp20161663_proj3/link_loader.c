@@ -6,6 +6,11 @@
 int progaddr = 0;   //  program load address
 int csaddr = 0;     //  control section address
 
+//  0 ~ F까지에 대응하는 2의 보수
+char two_compl[16] =
+  {'F', 'E', 'D', 'C', 'B', 'A', '9', '8',
+   '7', '6', '5', '4', '3', '2', '1', '0'};
+
 void set_progaddr(int prog_addr) {
   progaddr = prog_addr;
 }
@@ -31,6 +36,56 @@ int hex_ref_to_dec(char* hex_ref, int* ref_num) {
     printf("잘못된 reference number.\n");
     return FALSE;
   }
+  return TRUE;
+}
+
+int neg_hex_to_dec(char* neg, int len, int* dec) {
+  //  2's complement를 이용하여 음수 16진수 문자열을 10진수 음수로 변환
+  //  neg가 음수이므로 가장 앞자리인 neg[0]는 '8' ~ 'F'임(8, 9, A, B, C, D, E, F)
+  int i, idx, num = 16; 
+  
+  if('8' <= neg[0] && neg[0] <= '9') idx = neg[0] - '0'; 
+  else if('A' <= neg[0] && neg[0] <= 'F') idx = neg[0] - 'A' + 10;
+  else if('a' <= neg[0] && neg[0] <= 'f') idx = neg[0] - 'a' + 10;
+  else {
+    printf("유효하지 않은 16진수 음수\n");
+    return FALSE;
+  }
+  neg[0] = two_compl[idx];
+
+  for(i = 1; i < len; i++) {
+    if('0' <= neg[i] && neg[i] <= '9') idx = neg[i] - '0';
+    else if('A' <= neg[i] && neg[i] <= 'F') idx = neg[i] - 'A' + 10;
+    else if('a' <= neg[i] && neg[i] <= 'f') idx = neg[i] - 'a' + 10;
+    else {
+      printf("유효하지 않은 16진수 음수\n");
+      return FALSE;
+    }
+
+    neg[i] = two_compl[idx];
+  }
+
+  if('0' <= neg[len - 1] && neg[len - 1] <= '9')
+    *dec = neg[len - 1] - '0';
+  else if('A' <= neg[len - 1] && neg[len - 1] <= 'F')
+    *dec = neg[len - 1] - 'A' + 10;
+  else if('a' <= neg[len - 1] && neg[len - 1] <= 'f')
+    *dec = neg[len - 1] - 'a' + 10;
+
+  if(len >= 2) {
+    for(i = len - 2; i >= 0; i--) {
+      if('0' <= neg[i] && neg[i] <= '9')
+        *dec += ((neg[i] - '0') * num);
+      else if('A' <= neg[i] && neg[i] <= 'F')
+        *dec += ((neg[len - 1] - 'A' + 10) * num);
+      else if('a' <= neg[i] && neg[i] <= 'f')
+        *dec += ((neg[i] - 'a' + 10) * num);
+      num *= 16;
+    }
+  }
+  *dec += 1;  //  음수 16진수 문자열을 양수 정수로 변환함
+  *dec *= -1; //  -1을 곱해서 다시 음수 정수로 변환함
+
   return TRUE;
 }
 
@@ -119,7 +174,9 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
   char* reference[REFERENCE_N];      //  reference를 번호에 맞게 저장할 배열
                                      //  index : reference 번호(ex. reference[2] : 02 reference)
   char temp[SYMBOL_SIZE];
-  char hex[3];  //  2 digit 16진수 reference number
+  char hex[3];  //  2 digit 16진수 reference number, length, 등등
+  int add, len, start, mod, cur;
+  char op;
 
   for(i = 0; i < REFERENCE_N; i++)
     reference[i] = (char*)malloc(sizeof(char) * SYMBOL_SIZE);
@@ -174,12 +231,110 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
           strcpy(reference[ref_num], temp);
         } //  for-j end
       } //  R record end
-    } //  while end
 
-    int l;
-    for(l = 0; l < REFERENCE_N; l++) {
-      printf("%d : %s\n", l, reference[l]);
-    }
+      else if(input[0] == 'T') {  //  text record일 경우
+        //  text record 시작 주소 결정
+        for(j = 1; j <= 6; j++)
+          temp[j - 1] = input[j];
+        temp[j - 1] = '\0';
+        hex_to_dec(temp, &add);
+        
+        //  text record 길이 결정
+        hex[0] = input[7];
+        hex[1] = input[8];
+        hex[2] = '\0';
+        hex_ref_to_dec(hex, &len);
+
+        start = csaddr + add;
+        cur = start;
+
+        if(len > 30) {
+          printf("Text record length error!\n");
+          return FALSE;
+        }
+
+        for(j = 9; j <= 67; j += 2) {
+          int dec;  //  16진수 문자열(1bit)을 정수로 변환
+
+          if(j >= 9 + len * 2) break;
+          hex[0] = input[j];
+          hex[1] = input[j + 1];
+          hex[2] = '\0';
+
+          if(('8' <= hex[0] && hex[0] <= '9') || ('A' <= hex[0] && hex[0] <= 'F') ||
+            ('a' <= hex[0] && hex[0] <= 'f')) { //  해당 값이 음수일 경우
+            
+            if(!neg_hex_to_dec(hex, 2, &dec)) {
+              printf("pass2 과정에서 음수 변환 실패\n");
+              return FALSE;
+            }
+          }
+          else {  //  양수일 경우
+            if('0' <= hex[1] && hex[1] <= '9')
+              dec = hex[1] - '0';
+            else if('A' <= hex[1] && hex[1] <= 'F')
+              dec = hex[1] - 'A' + 10;
+            else if('a' <= hex[1] && hex[1] <= 'f')
+              dec = hex[1] - 'a' + 10;
+
+            dec += (hex[0] - '0') * 16; 
+          }
+          
+          memory[cur++] = dec;  //  가상 메모리에 저장
+        } //  text record for end
+      } //  Text record end
+
+      else if(input[0] == 'M') {  //  modification record일 경우
+        //  modification 위치 결정
+        int ref_num;
+        char c[3];
+        char temp5[6], temp6[7];  //  각각 modification 길이가 5, 6일 때 사용될 배열
+        char temp8[9];            //  sprintf 위한 배열
+
+        for(j = 1; j <= 6; j++) 
+          temp[j - 1] = input[j];
+        temp[j - 1] = '\0';
+        hex_to_dec(temp, &mod);
+        
+        //  수정할 길이 결정
+        hex[0] = input[7];
+        hex[1] = input[8];
+        hex[2] = '\0';
+        hex_ref_to_dec(hex, &len);
+
+        op = input[9];  //  operator
+
+        for(j = 10; j <= 11; j++)
+          hex[j - 10] = input[j];
+        hex[j - 10] = '\0';
+        hex_ref_to_dec(hex, &ref_num);
+
+        //
+        printf("\n");
+        printf("modification pos : %d(%#X)\n", mod, mod);
+        printf("modification length : %d(%#X)\n", len, len);
+        printf("operation : %c\n", op);
+        printf("reference number : %d(%#X)\n", ref_num, ref_num);
+        printf("reference : %s\n", reference[ref_num]);
+        printf("\n");
+        //
+
+        mod += csaddr;  //  실제로 수정할 위치
+        if(len == 6) {
+          for(k = 0; k < 3; k++) {
+            c[k] = memory[mod + k];
+            sprintf(temp8, "%8X", c[k]);
+            temp[2 * k] = temp8[6];
+            temp[2 * k + 1] = temp8[7];
+          }
+          temp[6] = '\0';
+
+        }
+        else if(len == 5) {
+        
+        }
+      } //  Modification record end
+    } //  while end
   } //  for three file end
   
   for(i = 0; i < REFERENCE_N; i++) {
