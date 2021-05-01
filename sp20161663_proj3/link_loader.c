@@ -5,6 +5,49 @@
 
 int progaddr = 0;   //  program load address
 int csaddr = 0;     //  control section address
+int total = 0;      //  program total length
+int bp_num = 0;     //  num of breakpoints
+
+int breakpoints[100] = {NONE, };
+
+int AR, XR, LR, PCR, BR, SR, TR; //  registers
+
+void add_bp(int bp, char* bpc) { //  breakpoint 추가
+  breakpoints[bp_num++] = bp;
+  printf("\t\t[ok] create breakpoint %s\n", bpc);
+}
+
+void show_all_bps() { //  모든 breakpoint 출력
+  int i;
+
+  printf("\t\tbreakpoint\n");
+  printf("\t\t----------\n");
+  for(i = 0; i < bp_num; i++) {
+    printf("\t%X\n", breakpoints[i]);
+  }
+}
+
+void clear_all_bps() {  //  모든 breakpoint 제거
+  int i;
+
+  for(i = 0; i < bp_num; i++)
+    breakpoints[i] = NONE;
+  bp_num = 0;
+
+  printf("\t\t[ok] clear all breakpoints\n");
+} 
+
+void reset_all_registers() {
+  //  load될 때 실행 PC는 프로그램 시작 주소, L은 프로그램 길이로 초기화
+  //  나머지는 모두 0으로 초기화
+  AR = 0;
+  XR = 0;
+  LR = total;
+  PCR = progaddr;
+  BR = 0;
+  SR = 0;
+  TR = 0;
+}
 
 //  0 ~ F까지에 대응하는 2의 보수
 char two_compl[16] =
@@ -100,6 +143,7 @@ int loader_pass1(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
   int address = 0;
   int length;
 
+  total = 0;          //  프로그램 길이 초기화
   csaddr = progaddr;  //  첫 번째 control section address = program address
 
   for(i = 0; i < 3; i++) {  //  최대 3개의 object file
@@ -131,6 +175,7 @@ int loader_pass1(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
           temp[j - 13] = input[j];
         temp[j - 13] = '\0';
         hex_to_dec(temp, &length);  //  length에 temp를 10진수 정수로 변환하여 저장
+        total += length;
         
         if(find_symbol(symbol)) {
           printf("이미 존재하는 symbol!\n");
@@ -385,6 +430,8 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
     reference[i] = NULL;
   }
   print_loadmap();  //  loadmap 출력
+  reset_all_registers();  //  register 초기화
 
   return TRUE;
 }
+

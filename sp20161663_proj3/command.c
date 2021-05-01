@@ -766,11 +766,7 @@ int check_loader(char* input, int opt_start, char* obj_1, char* obj_2, char* obj
     printf("Something was wrong in check_loader function\n");
     return FALSE;
   }
-/*
-  printf("f1s = %d, f1e = %d\n", f1s, f1e);
-  printf("f2s = %d, f2e = %d\n", f2s, f2e);
-  printf("f3s = %d, f3e = %d\n", f3s, f3e);
-*/  
+  
   for(i = f1s; i <= f1e; i++)
     obj_1[i - f1s] = input[i];
   obj_1[i - f1s] = '\0';
@@ -785,6 +781,72 @@ int check_loader(char* input, int opt_start, char* obj_1, char* obj_2, char* obj
     for(i = f3s; i <= f3e; i++)
       obj_3[i - f3s] = input[i];
     obj_3[i -f3s] = '\0';
+  }
+
+  return TRUE;
+}
+
+/* Proj3 bp check */
+int check_bp(char* input, int opt_start, int* bp, char* bpc) {
+  int i = opt_start;
+  int bs = NONE, be = NONE;
+  int hex = 1;
+
+  if(input[i] == '\0') {  //  다른 option 없을 경우 
+    *bp = -1;
+    return TRUE;
+  }
+  
+  i++;
+  for(; i < INPUT_LEN; i++) {
+    if(input[i] == '\0') {
+      if(bs == NONE && be == NONE) {  //  다른 option 없을 경우
+        *bp = -1;
+        return TRUE;
+      }
+
+      else if(bs != NONE && be == NONE) {
+        be = i - 1;
+        break;
+      }
+      else if(bs != NONE && be != NONE) break;
+    } //  if '\0' end
+
+    else if(bs == NONE && input[i] != ' ' && input[i] != '\t')  //  option start 찾은 경우
+      bs = i;
+    else if(bs != NONE && (input[i] == ' ' || input[i] == '\t')) //  option end 찾은 경우
+      be = i - 1;
+    else if(bs != NONE && be != NONE && input[i] != ' ' && input[i] != '\t') // 불필요한 option이 있을 경우
+      return FALSE; 
+  }
+
+  if(be - bs < 0 || be - bs  > 4) {
+    printf("breakpoint 범위 초과\n");
+    return FALSE;
+  } 
+
+  for(i = bs; i <= be; i++) 
+    bpc[i - bs] = input[i];
+  bpc[i - bs] = '\0';
+
+  if(!strcmp(bpc, "clear")) {
+    *bp = -2;
+    return TRUE;
+  }
+
+  *bp = 0;
+  for(i = strlen(bpc) - 1; i >= 0; i--) {
+    if('0' <= bpc[i] && bpc[i] <= '9') 
+      *bp += (bpc[i] - '0') * hex; 
+    else if('A' <= bpc[i] && bpc[i] <= 'F')
+      *bp += (bpc[i] - 'A' + 10) * hex;
+    else if('a' <= bpc[i] && bpc[i] <= 'f')
+      *bp += (bpc[i] - 'a' + 10) * hex;
+    else {
+      printf("잘못된 break point\n");
+      return FALSE;
+    }
+    hex *= 16;
   }
 
   return TRUE;
@@ -821,7 +883,11 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
   FILE* fp_obj1 = NULL;
   FILE* fp_obj2 = NULL;
   FILE* fp_obj3 = NULL;
- 
+
+  //  break point, -1일 경우 설정한 break point 나열, -2일 경우 clear, 
+  //  그 외의 경우 해당 값으로 break point 설정
+  int breakpoint;
+
   //  q[uit]
   if(!strcmp(cmd, "quit") || !strcmp(cmd, "q")) {
     if(!check_no_opt(input, opt_start)) {
@@ -1238,6 +1304,24 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     if(fp_obj3) fclose(fp_obj3);
     delete_estable();
     sprintf(queue_input, "%s %s %s %s", cmd, obj_f1, obj_f2, obj_f3);
+    enqueue(queue_input);
+  }
+
+  else if(!strcmp(cmd, "bp")) {
+    char bpc[6] = {0, };
+
+    if(!check_bp(input, opt_start, &breakpoint, bpc)) {
+      printf("유효하지 않은 bp 명령\n");
+      return TRUE;
+    }
+    if(breakpoint == -1) 
+      show_all_bps();
+    else if(breakpoint == -2) 
+      clear_all_bps();
+    else 
+      add_bp(breakpoint, bpc);
+
+    sprintf(queue_input, "%s %s", cmd, bpc);
     enqueue(queue_input);
   }
 
