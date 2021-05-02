@@ -23,7 +23,7 @@ void show_all_bps() { //  모든 breakpoint 출력
   printf("\t\tbreakpoint\n");
   printf("\t\t----------\n");
   for(i = 0; i < bp_num; i++) {
-    printf("\t%X\n", breakpoints[i]);
+    printf("\t\t%X\n", breakpoints[i]);
   }
 }
 
