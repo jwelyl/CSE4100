@@ -23,10 +23,10 @@ opcodelist : prints opcode hash table
 assemble filename : makes object file and listing file of filename
 type filename : prints contents of filename
 symbol : prints symbol table
-progaddr address: 
-loader object filename1 ... :
-bp : 
-run : 
+progaddr address: set PROGADDR as address 
+loader object filename1 ... : load object code in files to memory
+bp : print all break points, delete all break points, add new breakpoint
+run : excute loaded program
 
 ### How to clean
 make clean
