@@ -8,14 +8,14 @@ int csaddr = 0;     //  control section address
 int total = 0;      //  program total length
 int bp_num = 0;     //  num of breakpoints
 
+int breakpoints[100] = {NONE, };
+
+int AR, XR, LR, PCR, BR, SR, TR; //  registers
+
 //  0 ~ F까지에 대응하는 2의 보수
 char two_compl[16] =
   {'F', 'E', 'D', 'C', 'B', 'A', '9', '8',
    '7', '6', '5', '4', '3', '2', '1', '0'};
-
-int breakpoints[100] = {NONE, };
-
-int AR, XR, LR, PCR, BR, SR, TR; //  registers
 
 void add_bp(int bp, char* bpc) { //  breakpoint 추가
   breakpoints[bp_num++] = bp;

@@ -2,7 +2,7 @@
 #include "memory.h"
 
 EstabNode* est_head[ESTAB_SIZE];  //  load 과정에서 사용되는 hash table로 load 후 해제됨
-EstabNode load_map[REFERENCE_N];  //  load 후 load 맵 출력을 위한 동적 배열 
+EstabNode load_map[REFERENCE_N];  //  load 후 load 맵 출력을 위한 배열 
 
 int est_num = 0;      //  estable에 삽입된 symbol 개수
 int total_length = 0; //  program 총 길이
