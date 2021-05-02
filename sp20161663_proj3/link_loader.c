@@ -54,6 +54,13 @@ void reset_all_registers() {
   TR = 0;
 }
 
+void show_all_registers() { //  모든 register 출력
+  printf("A : %06X  X : %06X\n", AR, XR);
+  printf("L : %06X PC : %06X\n", LR, PCR);
+  printf("B : %06X  S : %06X\n", BR, SR);
+  printf("T : %06X\n", TR);
+}
+
 void set_progaddr(int prog_addr) {
   progaddr = prog_addr;
 }
