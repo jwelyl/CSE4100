@@ -681,7 +681,7 @@ int check_progaddr(char* input, int opt_start, char* progaddr) {
 
     else if(addre != NONE) {  //  address index 찾은 경우
       if(input[i] == ' ' || input[i] == '\t') continue;
-      else return FALSE;  //  불필요한 index 나타난 경우
+      else return FALSE;  //  불필요한 option 나타난 경우
     }
   } //  for-end
 
@@ -1285,8 +1285,10 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
       }
     }
 
-    if(!loader_pass1(fp_obj1, fp_obj2, fp_obj3)) return TRUE; //  pass 1 수행, 실패할 경우 loader 종료
-    
+    if(!loader_pass1(fp_obj1, fp_obj2, fp_obj3)) {
+      delete_estable();
+      return TRUE; //  pass 1 수행, 실패할 경우 loader 종료
+    }
     //  pass 1 끝난 후 pass 2를 위해 파일 닫기
     if(fp_obj1) fclose(fp_obj1);
     if(fp_obj2) fclose(fp_obj2);
@@ -1297,8 +1299,10 @@ int process_command(char* cmd, char* input, int opt_start) { //  qu[it] 명령 �
     fp_obj2 = fopen(obj_f2, "r");
     fp_obj3 = fopen(obj_f3, "r");
 
-    if(!loader_pass2(fp_obj1, fp_obj2, fp_obj3)) return TRUE;
-
+    if(!loader_pass2(fp_obj1, fp_obj2, fp_obj3)) {
+      delete_estable();
+      return TRUE;
+    }
     //  load 완료 후 열려있는 모든 파일 닫기
     if(fp_obj1) fclose(fp_obj1);
     if(fp_obj2) fclose(fp_obj2);

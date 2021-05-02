@@ -93,8 +93,10 @@ int find_symbol(char* sym_name) {
   EstabNode* cur = est_head[idx];
 
   for(; cur; cur = cur->next) {
-    if(!strcmp(cur->symbol_name, sym_name))
+    if(!strcmp(cur->symbol_name, sym_name)) {
+      printf("이미 존재하는 symbol %s\n", sym_name);
       return TRUE;
+    }
   }
 
   return FALSE;
@@ -117,6 +119,7 @@ int find_sym_addr(char* sym_name, int* addr) {
     }
   }
 
+  printf("symbol %s이 존재하지 않음\n", sym_name);
   return FALSE;
 }
 

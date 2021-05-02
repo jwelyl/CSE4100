@@ -177,10 +177,9 @@ int loader_pass1(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         hex_to_dec(temp, &length);  //  length에 temp를 10진수 정수로 변환하여 저장
         total += length;
         
-        if(find_symbol(symbol)) {
-          printf("이미 존재하는 symbol!\n");
+        if(find_symbol(symbol)) //  symbol이 이미 존재할 경 
           return FALSE;          
-        }
+        
         push_est_node(symbol, csaddr, length);
       }
       else if(input[0] == 'D') {  //  Define record일 경우
@@ -200,6 +199,10 @@ int loader_pass1(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
         
           hex_to_dec(temp, &address); //  symbol의 상대적인 주소 구하기
           address += csaddr;  //  symbol의 실제 주소 구하기
+
+          if(find_symbol(symbol)) //  symbol이 이미 존재할 경우
+            return FALSE;          
+
           push_est_node(symbol, address, NONE);  //  control sect 아닌 symbol의 경우 길이 -1
         } 
       }
@@ -389,7 +392,8 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
             hex_to_dec(temp5, &addr); 
         }
 
-        find_sym_addr(reference[ref_num], &add);
+        if(!find_sym_addr(reference[ref_num], &add)) return FALSE;
+
         if(op == '+') addr += add;
         else if(op == '-') addr -= add;
 
