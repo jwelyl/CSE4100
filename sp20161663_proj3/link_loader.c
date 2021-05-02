@@ -8,6 +8,11 @@ int csaddr = 0;     //  control section address
 int total = 0;      //  program total length
 int bp_num = 0;     //  num of breakpoints
 
+//  0 ~ F까지에 대응하는 2의 보수
+char two_compl[16] =
+  {'F', 'E', 'D', 'C', 'B', 'A', '9', '8',
+   '7', '6', '5', '4', '3', '2', '1', '0'};
+
 int breakpoints[100] = {NONE, };
 
 int AR, XR, LR, PCR, BR, SR, TR; //  registers
@@ -48,11 +53,6 @@ void reset_all_registers() {
   SR = 0;
   TR = 0;
 }
-
-//  0 ~ F까지에 대응하는 2의 보수
-char two_compl[16] =
-  {'F', 'E', 'D', 'C', 'B', 'A', '9', '8',
-   '7', '6', '5', '4', '3', '2', '1', '0'};
 
 void set_progaddr(int prog_addr) {
   progaddr = prog_addr;
@@ -248,6 +248,14 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
       
         if(!find_sym_addr(symbol, &csaddr)) { //  symbol에 해당하는 주소 찾기
           printf("존재하지 않는 symbol\n");
+
+          for(i = 0; i < REFERENCE_N; i++) {  //  reference table 해제
+            if(reference[i]) {
+              free(reference[i]);
+              reference[i] = NULL;
+            }
+          }
+
           return FALSE;
         }
         strcpy(reference[1], symbol);
@@ -267,6 +275,14 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
 
           if(!hex_ref_to_dec(hex, &ref_num) || ref_num >= 14) {
             printf("Reference 번호 오류\n");
+
+            for(i = 0; i < REFERENCE_N; i++) {  //  reference table 해제
+                if(reference[i]) {
+                  free(reference[i]);
+                  reference[i] = NULL;
+                }
+              }
+
             return FALSE;
           } 
 
@@ -296,6 +312,13 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
 
         if(len > 30) {
           printf("Text record length error!\n");
+          for(i = 0; i < REFERENCE_N; i++) {  //  reference table 해제
+            if(reference[i]) {
+              free(reference[i]);
+              reference[i] = NULL;
+            }
+          }
+
           return FALSE;
         }
 
@@ -312,6 +335,13 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
             
             if(!neg_hex_to_dec(hex, 2, &dec)) { //  음수 16진수 문자열을 정수로 변환
               printf("pass2 과정에서 음수 변환 실패\n");
+
+              for(i = 0; i < REFERENCE_N; i++) {  //  reference table 해제
+                if(reference[i]) {
+                  free(reference[i]);
+                  reference[i] = NULL;
+                }
+              }
               return FALSE;
             }
           }
@@ -392,7 +422,16 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
             hex_to_dec(temp5, &addr); 
         }
 
-        if(!find_sym_addr(reference[ref_num], &add)) return FALSE;
+        if(!find_sym_addr(reference[ref_num], &add)) {
+           for(i = 0; i < REFERENCE_N; i++) {  //  reference table 해제
+            if(reference[i]) {
+              free(reference[i]);
+              reference[i] = NULL;
+            }
+           }
+       
+           return FALSE;
+        }
 
         if(op == '+') addr += add;
         else if(op == '-') addr -= add;
@@ -430,8 +469,10 @@ int loader_pass2(FILE* fp_obj1, FILE* fp_obj2, FILE* fp_obj3) {
   } //  for three file end
   
   for(i = 0; i < REFERENCE_N; i++) {  //  reference table 해제
-    free(reference[i]);
-    reference[i] = NULL;
+    if(reference[i]) {
+      free(reference[i]);
+      reference[i] = NULL;
+    }
   }
   print_loadmap();  //  loadmap 출력
   reset_all_registers();  //  register 초기화
